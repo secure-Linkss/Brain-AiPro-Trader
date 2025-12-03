@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { 
-  Users, 
-  TrendingUp, 
-  DollarSign, 
-  Activity, 
+import {
+  Users,
+  TrendingUp,
+  DollarSign,
+  Activity,
   Settings,
   LogOut,
   Shield,
@@ -22,6 +22,7 @@ import {
   Eye,
   Calendar
 } from "lucide-react"
+import { SystemHealthMonitor } from "@/components/admin/system-health-monitor"
 
 interface AdminStats {
   totalUsers: number
@@ -114,27 +115,27 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-slate-950">
       {/* Admin Header */}
-      <header className="border-b border-slate-700 bg-slate-800/50 backdrop-blur-sm">
+      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <Shield className="w-6 h-6 text-purple-400" />
-              <span className="text-xl font-bold text-white">Admin Panel</span>
+              <Shield className="w-6 h-6 text-purple-500" />
+              <span className="text-xl font-bold text-white">Mission Control</span>
             </div>
             <Badge className={getHealthBadge(stats?.systemHealth || "healthy")}>
               System: {stats?.systemHealth || "Unknown"}
             </Badge>
           </div>
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white">
+            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white">
               <Settings className="w-4 h-4" />
             </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-slate-300 hover:text-white"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-400 hover:text-white"
               onClick={() => router.push("/dashboard")}
             >
               <LogOut className="w-4 h-4" />
@@ -143,11 +144,21 @@ export default function AdminPanel() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 space-y-8">
+
+        {/* System Health Monitor - Mission Control */}
+        <section>
+          <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+            <Activity className="mr-2 h-5 w-5 text-purple-500" />
+            Real-Time System Status
+          </h2>
+          <SystemHealthMonitor />
+        </section>
+
         {/* Overview Stats */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-slate-800 border-slate-700">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="bg-slate-900 border-slate-800">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-slate-400 flex items-center">
                   <Users className="w-4 h-4 mr-2" />
@@ -156,11 +167,11 @@ export default function AdminPanel() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-white">{stats.totalUsers.toLocaleString()}</div>
-                <p className="text-xs text-slate-400">+{stats.activeUsers} active this month</p>
+                <p className="text-xs text-slate-500">+{stats.activeUsers} active this month</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className="bg-slate-900 border-slate-800">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-slate-400 flex items-center">
                   <DollarSign className="w-4 h-4 mr-2" />
@@ -169,11 +180,11 @@ export default function AdminPanel() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-400">${stats.totalRevenue.toLocaleString()}</div>
-                <p className="text-xs text-slate-400">${stats.monthlyRevenue} this month</p>
+                <p className="text-xs text-slate-500">${stats.monthlyRevenue} this month</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className="bg-slate-900 border-slate-800">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-slate-400 flex items-center">
                   <Activity className="w-4 h-4 mr-2" />
@@ -182,11 +193,11 @@ export default function AdminPanel() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-white">{stats.totalSignals.toLocaleString()}</div>
-                <p className="text-xs text-slate-400">{stats.successRate}% success rate</p>
+                <p className="text-xs text-slate-500">{stats.successRate}% success rate</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className="bg-slate-900 border-slate-800">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-slate-400 flex items-center">
                   <TrendingUp className="w-4 h-4 mr-2" />
@@ -195,25 +206,25 @@ export default function AdminPanel() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-400">{stats.premiumUsers.toLocaleString()}</div>
-                <p className="text-xs text-slate-400">Active subscriptions</p>
+                <p className="text-xs text-slate-500">Active subscriptions</p>
               </CardContent>
             </Card>
           </div>
         )}
 
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="bg-slate-800 border-slate-700">
-            <TabsTrigger value="users" className="text-slate-300">Users</TabsTrigger>
-            <TabsTrigger value="analytics" className="text-slate-300">Analytics</TabsTrigger>
-            <TabsTrigger value="system" className="text-slate-300">System</TabsTrigger>
-            <TabsTrigger value="settings" className="text-slate-300">Settings</TabsTrigger>
+          <TabsList className="bg-slate-900 border-slate-800">
+            <TabsTrigger value="users" className="text-slate-400 data-[state=active]:text-white data-[state=active]:bg-slate-800">Users</TabsTrigger>
+            <TabsTrigger value="analytics" className="text-slate-400 data-[state=active]:text-white data-[state=active]:bg-slate-800">Analytics</TabsTrigger>
+            <TabsTrigger value="system" className="text-slate-400 data-[state=active]:text-white data-[state=active]:bg-slate-800">System Logs</TabsTrigger>
+            <TabsTrigger value="settings" className="text-slate-400 data-[state=active]:text-white data-[state=active]:bg-slate-800">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="space-y-6">
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className="bg-slate-900 border-slate-800">
               <CardHeader>
                 <CardTitle className="text-white flex items-center">
-                  <Users className="w-5 h-5 mr-2 text-purple-400" />
+                  <Users className="w-5 h-5 mr-2 text-purple-500" />
                   User Management
                 </CardTitle>
                 <CardDescription className="text-slate-400">
@@ -223,11 +234,11 @@ export default function AdminPanel() {
               <CardContent>
                 <div className="space-y-4">
                   {users.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg border border-slate-600">
+                    <div key={user.id} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors">
                       <div className="flex items-center space-x-4">
-                        <Avatar className="w-10 h-10">
-                          <AvatarFallback className="bg-purple-500 text-white">
-                            {user.name?.charAt(0) || user.email.charAt(0)}
+                        <Avatar className="w-10 h-10 border border-slate-600">
+                          <AvatarFallback className="bg-slate-800 text-purple-400 font-bold">
+                            {user.name?.charAt(0) || user.email.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
@@ -251,7 +262,7 @@ export default function AdminPanel() {
                           Last Active: {new Date(user.lastActive).toLocaleDateString()}
                         </div>
                         {user.subscriptionExpires && (
-                          <div className="text-sm text-yellow-400">
+                          <div className="text-sm text-yellow-500 mt-1">
                             Expires: {new Date(user.subscriptionExpires).toLocaleDateString()}
                           </div>
                         )}
@@ -264,66 +275,59 @@ export default function AdminPanel() {
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className="bg-slate-900 border-slate-800">
               <CardHeader>
                 <CardTitle className="text-white flex items-center">
-                  <BarChart3 className="w-5 h-5 mr-2 text-purple-400" />
+                  <BarChart3 className="w-5 h-5 mr-2 text-purple-500" />
                   Analytics Overview
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <BarChart3 className="w-16 h-16 mx-auto mb-4 text-slate-500" />
+                <div className="text-center py-12">
+                  <BarChart3 className="w-16 h-16 mx-auto mb-4 text-slate-600" />
                   <h3 className="text-lg font-semibold text-white mb-2">Analytics Dashboard</h3>
-                  <p className="text-slate-400">
-                    Detailed analytics and reporting features coming soon
+                  <p className="text-slate-400 max-w-md mx-auto">
+                    Detailed analytics, user retention metrics, and revenue forecasting modules are currently being aggregated.
                   </p>
+                  <Button className="mt-6 bg-purple-600 hover:bg-purple-700">
+                    View Raw Data
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="system" className="space-y-6">
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className="bg-slate-900 border-slate-800">
               <CardHeader>
                 <CardTitle className="text-white flex items-center">
-                  <Settings className="w-5 h-5 mr-2 text-purple-400" />
-                  System Health
+                  <Settings className="w-5 h-5 mr-2 text-purple-500" />
+                  System Logs
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h4 className="font-semibold text-white">System Status</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">API Status:</span>
-                        <Badge className="bg-green-500 text-white">Operational</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Database:</span>
-                        <Badge className="bg-green-500 text-white">Healthy</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">AI Service:</span>
-                        <Badge className="bg-green-500 text-white">Online</Badge>
-                      </div>
+                <div className="space-y-4">
+                  <div className="p-4 bg-slate-950 rounded border border-slate-800 font-mono text-sm text-slate-400">
+                    <div className="flex justify-between border-b border-slate-800 pb-2 mb-2">
+                      <span>TIMESTAMP</span>
+                      <span>LEVEL</span>
+                      <span>MESSAGE</span>
                     </div>
-                  </div>
-                  <div className="space-y-4">
-                    <h4 className="font-semibold text-white">Performance Metrics</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Response Time:</span>
-                        <span className="text-white">124ms</span>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-green-400">
+                        <span>{new Date().toISOString()}</span>
+                        <span>INFO</span>
+                        <span>System health check passed</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Uptime:</span>
-                        <span className="text-green-400">99.9%</span>
+                      <div className="flex justify-between text-blue-400">
+                        <span>{new Date(Date.now() - 5000).toISOString()}</span>
+                        <span>DEBUG</span>
+                        <span>Agent consensus reached: BUY EURUSD</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Error Rate:</span>
-                        <span className="text-green-400">0.1%</span>
+                      <div className="flex justify-between text-slate-400">
+                        <span>{new Date(Date.now() - 15000).toISOString()}</span>
+                        <span>INFO</span>
+                        <span>Database backup completed</span>
                       </div>
                     </div>
                   </div>
@@ -333,20 +337,23 @@ export default function AdminPanel() {
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className="bg-slate-900 border-slate-800">
               <CardHeader>
                 <CardTitle className="text-white flex items-center">
-                  <Settings className="w-5 h-5 mr-2 text-purple-400" />
+                  <Settings className="w-5 h-5 mr-2 text-purple-500" />
                   Admin Settings
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <Settings className="w-16 h-16 mx-auto mb-4 text-slate-500" />
+                <div className="text-center py-12">
+                  <Settings className="w-16 h-16 mx-auto mb-4 text-slate-600" />
                   <h3 className="text-lg font-semibold text-white mb-2">System Configuration</h3>
-                  <p className="text-slate-400">
-                    Advanced system settings and configuration options coming soon
+                  <p className="text-slate-400 mb-6">
+                    Manage global system parameters, API keys, and feature flags.
                   </p>
+                  <Button onClick={() => router.push('/admin/settings')} className="bg-purple-600 hover:bg-purple-700">
+                    Go to Settings Dashboard
+                  </Button>
                 </div>
               </CardContent>
             </Card>

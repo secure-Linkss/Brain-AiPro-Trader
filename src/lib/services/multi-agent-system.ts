@@ -198,21 +198,35 @@ Format as JSON:
     /**
      * Build consensus from all agent results
      */
+    /**
+     * Build consensus from all agent results
+     * Implements "Strict Consensus" logic for guru-level accuracy
+     */
     private async buildConsensus(results: SubAgentResult[]): Promise<SubAgentResult> {
         const buyVotes = results.filter(r => r.signal === 'BUY')
         const sellVotes = results.filter(r => r.signal === 'SELL')
+        const totalAgents = results.length
 
-        const signal = buyVotes.length > sellVotes.length ? 'BUY' :
-            sellVotes.length > buyVotes.length ? 'SELL' : 'NEUTRAL'
+        // 1. Majority Vote Requirement (60%+)
+        let signal: 'BUY' | 'SELL' | 'NEUTRAL' = 'NEUTRAL'
+        if (buyVotes.length >= totalAgents * 0.6) signal = 'BUY'
+        else if (sellVotes.length >= totalAgents * 0.6) signal = 'SELL'
 
         const relevantResults = signal === 'BUY' ? buyVotes : sellVotes
 
-        if (relevantResults.length === 0) {
+        // 2. Risk Veto: If ANY agent flags "high" risk, kill the trade
+        const highRiskAlerts = results.filter(r => r.riskLevel === 'high')
+        if (highRiskAlerts.length > 0) {
+            console.log(`[Consensus] Trade vetoed due to high risk flag from ${highRiskAlerts.length} agents`)
+            signal = 'NEUTRAL'
+        }
+
+        if (signal === 'NEUTRAL' || relevantResults.length === 0) {
             return {
                 agentName: 'Consensus',
                 signal: 'NEUTRAL',
                 confidence: 0,
-                reasoning: 'No clear consensus',
+                reasoning: 'No clear consensus or high risk detected',
                 entryPrice: 0,
                 stopLoss: 0,
                 takeProfit: 0,
@@ -221,26 +235,43 @@ Format as JSON:
             }
         }
 
-        // Weighted average based on agent performance
+        // 3. Weighted Confidence Calculation
         const totalWeight = relevantResults.reduce((sum, r) => sum + (r.metadata?.historicalWinRate || 50), 0)
         const weightedConfidence = relevantResults.reduce((sum, r) => {
             const weight = (r.metadata?.historicalWinRate || 50) / totalWeight
             return sum + (r.confidence * weight)
         }, 0)
 
+        // 4. System Threshold Check (fetched dynamically in real-time, defaulting to 75% here)
+        // Note: The caller (analyze) will filter against the DB setting, but we enforce a hard floor here.
+        if (weightedConfidence < 75) {
+            return {
+                agentName: 'Consensus',
+                signal: 'NEUTRAL',
+                confidence: weightedConfidence,
+                reasoning: `Confidence ${weightedConfidence.toFixed(1)}% below guru threshold (75%)`,
+                entryPrice: 0,
+                stopLoss: 0,
+                takeProfit: 0,
+                riskLevel: 'medium',
+                executionTime: 0
+            }
+        }
+
         return {
             agentName: 'Consensus',
             signal,
             confidence: weightedConfidence,
-            reasoning: `${relevantResults.length}/${results.length} agents agree on ${signal}`,
-            entryPrice: relevantResults[0].entryPrice,
+            reasoning: `${relevantResults.length}/${totalAgents} agents agree on ${signal} with ${weightedConfidence.toFixed(1)}% confidence`,
+            entryPrice: relevantResults[0].entryPrice, // Use primary agent's levels
             stopLoss: relevantResults[0].stopLoss,
             takeProfit: relevantResults[0].takeProfit,
             riskLevel: this.calculateOverallRisk(relevantResults),
             executionTime: 0,
             metadata: {
                 agentCount: relevantResults.length,
-                totalAgents: results.length
+                totalAgents: totalAgents,
+                voteRatio: relevantResults.length / totalAgents
             }
         }
     }
