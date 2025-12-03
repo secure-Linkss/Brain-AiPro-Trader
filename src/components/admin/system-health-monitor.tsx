@@ -29,16 +29,24 @@ export function SystemHealthMonitor() {
     })
 
     useEffect(() => {
-        // Simulate real-time updates (in production this would be a WebSocket or polling)
-        const interval = setInterval(() => {
-            setStatus(prev => ({
-                ...prev,
-                cpu_usage: Math.floor(Math.random() * 30) + 10, // Mock data for visual
-                memory_usage: Math.floor(Math.random() * 40) + 20,
-                db_latency: Math.floor(Math.random() * 20) + 5,
-                last_updated: new Date().toISOString()
-            }))
-        }, 5000)
+        const fetchHealth = async () => {
+            try {
+                const res = await fetch('/api/admin/system-health')
+                if (res.ok) {
+                    const data = await res.json()
+                    setStatus(data)
+                }
+            } catch (error) {
+                console.error("Failed to fetch system health", error)
+                setStatus(prev => ({ ...prev, status: 'critical' }))
+            }
+        }
+
+        // Initial fetch
+        fetchHealth()
+
+        // Poll every 10 seconds
+        const interval = setInterval(fetchHealth, 10000)
 
         return () => clearInterval(interval)
     }, [])

@@ -14,23 +14,50 @@ export async function GET(req: Request) {
       )
     }
 
-    // Get unread message count for admin
-    const unreadCount = await db.contactMessage.count({
-      where: {
-        isRead: false,
-        userId: session.user.id
-      }
-    })
+    // Calculate start of current month for monthly revenue
+    const startOfMonth = new Date()
+    startOfMonth.setDate(1)
+    startOfMonth.setHours(0, 0, 0, 0)
+
+    // Parallelize DB queries for performance
+    const [
+      totalUsers,
+      activeUsers,
+      premiumUsers,
+      totalRevenueResult,
+      monthlyRevenueResult,
+      totalSignals,
+      successRateResult
+    ] = await Promise.all([
+      db.user.count(),
+      db.user.count({ where: { lastActive: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } }), // Active in last 30 days
+      db.user.count({ where: { role: "premium" } }),
+      db.payment.aggregate({ _sum: { amount: true }, where: { status: "completed" } }),
+      db.payment.aggregate({ _sum: { amount: true }, where: { status: "completed", createdAt: { gte: startOfMonth } } }),
+      db.signal.count(),
+      db.signal.aggregate({ _avg: { successRate: true }, where: { status: "CLOSED" } })
+    ])
+
+    const stats = {
+      totalUsers,
+      activeUsers,
+      premiumUsers,
+      totalRevenue: totalRevenueResult._sum.amount || 0,
+      monthlyRevenue: monthlyRevenueResult._sum.amount || 0,
+      totalSignals,
+      successRate: successRateResult._avg.successRate || 0,
+      systemHealth: "healthy" // This could be dynamic based on error logs
+    }
 
     return NextResponse.json({
       success: true,
-      unreadCount
+      stats
     })
 
   } catch (error) {
     console.error("Admin stats error:", error)
     return NextResponse.json(
-      { error: "Failed to get unread count" },
+      { error: "Failed to fetch admin stats" },
       { status: 500 }
     )
   }
