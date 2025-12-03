@@ -434,6 +434,10 @@ Format as JSON:
      * Detect patterns
      */
     private async detectPatterns(priceData: any[], indicators: any) {
+        // Fetch system settings for confidence threshold
+        const settings = await prisma.systemSettings.findFirst()
+        const minConfidence = settings?.minSignalConfidence || 75
+
         const response = await fetch(`${process.env.PYTHON_PATTERN_DETECTOR_URL}/detect`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -448,7 +452,7 @@ Format as JSON:
                     close: p.close,
                     volume: p.volume
                 })),
-                min_confidence: 60,
+                min_confidence: minConfidence, // Use configurable threshold
                 require_volume_confirmation: true
             })
         })
@@ -746,8 +750,22 @@ export class MultiAgentCoordinator {
      * Save agent results to database
      */
     private async saveResults(result: AgentResult) {
+        // Fetch system settings for confidence threshold
+        const settings = await prisma.systemSettings.findFirst()
+        const minConfidence = settings?.minSignalConfidence || 75
+        const maxConfidence = settings?.maxSignalConfidence || 95
+
         for (const finding of result.findings) {
             try {
+                // Filter signals below minimum confidence
+                if (finding.confidence < minConfidence) {
+                    console.log(`Signal for ${finding.symbol} filtered out (confidence: ${finding.confidence}% < ${minConfidence}%)`)
+                    continue
+                }
+
+                // Cap confidence at maximum
+                const cappedConfidence = Math.min(finding.confidence, maxConfidence)
+
                 // Find trading pair
                 const tradingPair = await prisma.tradingPair.findFirst({
                     where: { symbol: finding.symbol }
@@ -761,7 +779,7 @@ export class MultiAgentCoordinator {
                         userId: 'system', // System-generated signal
                         tradingPairId: tradingPair.id,
                         type: finding.signal,
-                        strength: finding.confidence,
+                        strength: cappedConfidence, // Use capped confidence
                         strategy: finding.strategies.join(', '),
                         entryPrice: finding.entryPrice,
                         stopLoss: finding.stopLoss,
@@ -771,11 +789,11 @@ export class MultiAgentCoordinator {
                         reason: finding.reasoning,
                         confirmations: finding.strategies.length,
                         fibonacci: finding.indicators.fibonacci || null,
-                        isConfirmed: finding.confidence >= 70
+                        isConfirmed: cappedConfidence >= 70
                     }
                 })
 
-                console.log(`Signal saved for ${finding.symbol}`)
+                console.log(`Signal saved for ${finding.symbol} (confidence: ${cappedConfidence}%)`)
             } catch (error) {
                 console.error(`Error saving signal for ${finding.symbol}:`, error)
             }
