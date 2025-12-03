@@ -1,0 +1,1077 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "windows"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  password      String?
+  avatar        String?  // Profile avatar URL
+  role          String   @default("user") // "user", "admin", "premium"
+  stripeCustomerId String? @unique // Stripe customer ID
+  subscriptionId String?  // Stripe subscription ID
+  subscriptionExpires DateTime? // Subscription expiry date
+  telegramBotId String?  // Telegram bot ID for notifications
+  telegramChatId String? // Telegram chat ID for notifications
+  telegramEnabled Boolean @default(false) // Whether telegram notifications are enabled
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  watchlists    Watchlist[]
+  signals       Signal[]
+  analyses      Analysis[]
+  successRates  SuccessRate[]
+  scannerResults ScannerResult[]
+  payments       Payment[]
+  notifications  Notification[]
+  notificationPreferences NotificationPreference[]
+  backtestResults BacktestResult[]
+  auditLogs      AuditLog[]
+  subscription   Subscription?
+  telegramConfig TelegramConfig?
+  tradingSessions TradingSession[]
+  performanceMetrics PerformanceMetrics[]
+  trades        Trade[]
+  mt4Connections MT4Connection[]
+  tradeInstructions TradeInstruction[]
+  
+  // Two-Factor Authentication
+  twoFactorEnabled     Boolean   @default(false)
+  twoFactorSecret      String?
+  twoFactorBackupCodes String[]  @default([])
+  twoFactorEnabledAt   DateTime?
+  
+  @@map("users")
+}
+
+model TradingPair {
+  id          String   @id @default(cuid())
+  symbol      String   @unique // e.g., "BTCUSD", "EURUSD"
+  name        String   // e.g., "Bitcoin/USD", "Euro/USD"
+  type        String   // "crypto", "forex", "stock", "commodity"
+  exchange    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  signals     Signal[]
+  analyses    Analysis[]
+  watchlists  Watchlist[]
+  priceData   PriceData[]
+  scannerResults ScannerResult[]
+  patternDetections PatternDetection[]
+  supportResistance SupportResistance[]
+  pivotPoints PivotPoint[]
+  
+  @@map("trading_pairs")
+}
+
+model Signal {
+  id            String   @id @default(cuid())
+  userId        String
+  tradingPairId String
+  type          String   // "BUY", "SELL", "HOLD"
+  strength      Float    // 0-100 confidence score
+  strategy      String   // "price_action", "chart_pattern", "harmonics", etc.
+  entryPrice    Float?
+  stopLoss      Float?
+  takeProfit1   Float?   // TP1 at 80 pips
+  takeProfit2   Float?   // TP2
+  takeProfit3   Float?   // TP3
+  takeProfit4   Float?   // TP4
+  status        String   @default("PENDING") // "PENDING", "CONFIRMED", "ACTIVE", "CLOSED", "CANCELLED"
+  reason        String?  // AI-generated reason for the signal
+  confirmations  Float?  // Number of strategy confirmations
+  riskReward     String? // R:R ratio
+  fibonacci      Json?   // Fibonacci levels (retracement & extension)
+  elliottWave    Json?   // Elliott Wave analysis
+  timeframe      String? // Timeframe used for analysis
+  isConfirmed    Boolean @default(false) // Trade confirmation status
+  sniperEntry    Boolean @default(false) // Sniper entry confirmation
+  fundamentalScore Float? // Fundamental analysis score (0-100)
+  retestStatus   String? @default("PENDING") // "PENDING", "RETESTED", "NO_RETEST"
+  signalQuality  String? // "EXCELLENT", "GOOD", "AVERAGE", "POOR"
+  successRate    Float?  // Historical success rate for this setup
+  volumeConfirmation Boolean @default(false)
+  newsImpact     Json?   // Related news and impact
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tradingPair   TradingPair @relation(fields: [tradingPairId], references: [id])
+  
+  @@map("signals")
+}
+
+model Analysis {
+  id            String   @id @default(cuid())
+  userId        String
+  tradingPairId String
+  strategy      String   // "price_action", "chart_pattern", "harmonics", etc.
+  result        Json     // Analysis results as JSON
+  confidence    Float    // 0-100 confidence score
+  timeframe      String?  // Timeframe used for analysis
+  indicators     Json?    // Technical indicators used
+  patterns       Json?    // Patterns detected
+  successRate    Float?   // Historical success rate for this strategy
+  timestamp     DateTime @default(now())
+  
+  // Relations
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tradingPair   TradingPair @relation(fields: [tradingPairId], references: [id])
+  
+  @@map("analyses")
+}
+
+model SuccessRate {
+  id            String   @id @default(cuid())
+  userId        String
+  strategy      String
+  timeframe     String?
+  totalSignals   Int      @default(0)
+  successfulSignals Int  @default(0)
+  successRate   Float    @default(0)
+  avgProfit     Float?   @default(0)
+  avgLoss       Float?   @default(0)
+  profitFactor  Float?   @default(0)
+  maxDrawdown   Float?   @default(0)
+  sharpeRatio   Float?   @default(0)
+  lastUpdated   DateTime @default(now())
+  
+  // Relations
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, strategy, timeframe])
+  @@map("success_rates")
+}
+
+model ScannerResult {
+  id            String   @id @default(cuid())
+  userId        String
+  tradingPairId String
+  timeframe     String
+  signal        String   // "BUY", "SELL", "HOLD"
+  strength      Float
+  strategies    Json     // Array of strategies that confirmed
+  price         Float
+  timestamp     DateTime @default(now())
+  
+  // Relations
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tradingPair   TradingPair @relation(fields: [tradingPairId], references: [id])
+  
+  @@map("scanner_results")
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  userId        String
+  stripePaymentId String @unique
+  amount        Float
+  currency      String   @default("USD")
+  status        String   // "pending", "completed", "failed", "refunded"
+  type          String   // "subscription", "one_time"
+  description   String?
+  metadata      Json?    // Additional payment metadata
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("payments")
+}
+
+model SubscriptionPlan {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  stripePriceId String   @unique
+  amount        Float
+  currency      String   @default("USD")
+  interval      String   // "month", "year"
+  features      Json     // List of features
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  subscriptions Subscription[]
+  
+  @@map("subscription_plans")
+}
+
+model Watchlist {
+  id            String   @id @default(cuid())
+  userId        String
+  tradingPairId String
+  createdAt     DateTime @default(now())
+  
+  // Relations
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tradingPair   TradingPair @relation(fields: [tradingPairId], references: [id])
+  
+  @@unique([userId, tradingPairId])
+  @@map("watchlists")
+}
+
+model PriceData {
+  id            String   @id @default(cuid())
+  tradingPairId String
+  open          Float
+  high          Float
+  low           Float
+  close         Float
+  volume        Float?
+  timestamp     DateTime
+  timeframe     String   @default("1h") // M1, M5, M15, H1, H4, D1
+  
+  // Relations
+  tradingPair   TradingPair @relation(fields: [tradingPairId], references: [id], onDelete: Cascade)
+  
+  @@index([tradingPairId, timestamp, timeframe])
+  @@map("price_data")
+}
+
+model NewsArticle {
+  id            String   @id @default(cuid())
+  title         String
+  content       String   @db.Text
+  summary       String?  @db.Text
+  source        String   // "NewsAPI", "Benzinga", "RSS", "Twitter"
+  url           String?
+  publishedAt   DateTime
+  category      String?  // "earnings", "guidance", "m&a", "macro", "central_bank", "geopolitical"
+  sentiment     Float?   // -1 to 1
+  impactScore   Float?   // 0 to 100
+  entities      Json?    // Extracted tickers and companies
+  affectedSymbols String[] // Array of symbol IDs
+  createdAt     DateTime @default(now())
+  
+  @@index([publishedAt])
+  @@index([category])
+  @@map("news_articles")
+}
+
+model NotificationPreference {
+  id            String   @id @default(cuid())
+  userId        String
+  watchlistId   String?  // null = global preferences
+  signalTypes   String[] // ["BUY", "SELL", "HOLD"]
+  minConfidence Float    @default(70) // Minimum confidence threshold
+  channels      String[] // ["email", "sms", "telegram", "in_app"]
+  emailEnabled  Boolean  @default(true)
+  smsEnabled    Boolean  @default(false)
+  telegramEnabled Boolean @default(false)
+  inAppEnabled  Boolean  @default(true)
+  quietHoursStart String? // "22:00"
+  quietHoursEnd   String? // "08:00"
+  digestMode    Boolean  @default(false) // Batch notifications
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, watchlistId])
+  @@map("notification_preferences")
+}
+
+model Notification {
+  id            String   @id @default(cuid())
+  userId        String
+  type          String   // "signal", "news_alert", "system_health", "backtest_complete"
+  title         String
+  message       String   @db.Text
+  data          Json?    // Additional data (signal details, etc.)
+  channels      String[] // Channels it was sent to
+  isRead        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model BacktestResult {
+  id            String   @id @default(cuid())
+  userId        String
+  strategy      String
+  symbol        String?  // null = all symbols
+  timeframe     String?  // null = all timeframes
+  startDate     DateTime
+  endDate       DateTime
+  totalTrades   Int
+  winningTrades Int
+  losingTrades  Int
+  winRate       Float
+  precision     Float
+  recall        Float
+  f1Score       Float
+  avgReturn     Float
+  avgProfit     Float
+  avgLoss       Float
+  maxDrawdown   Float
+  sharpeRatio   Float?
+  profitFactor  Float?
+  expectancy    Float?
+  avgHoldingTime Float? // in hours
+  trades        Json     // Array of individual trade results
+  metadata      Json?    // Additional backtest parameters
+  createdAt     DateTime @default(now())
+  
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([strategy, symbol, timeframe])
+  @@index([createdAt])
+  @@map("backtest_results")
+}
+
+model PatternDetection {
+  id            String   @id @default(cuid())
+  tradingPairId String
+  strategy      String   // "head_shoulders", "double_top", "gartley", etc.
+  timeframe     String
+  confidence    Float
+  patternType   String   // "bullish", "bearish", "neutral"
+  coordinates   Json     // Pattern points with timestamps and prices
+  indicators    Json?    // Supporting indicator values
+  explanation   String   @db.Text // Why this pattern was detected
+  detectedAt    DateTime
+  expiresAt     DateTime? // When pattern becomes invalid
+  isValid       Boolean  @default(true)
+  outcome       String?  // "tp_hit", "sl_hit", "expired", "pending"
+  actualReturn  Float?   // Actual return if traded
+  createdAt     DateTime @default(now())
+  
+  // Relations
+  tradingPair   TradingPair @relation(fields: [tradingPairId], references: [id], onDelete: Cascade)
+  
+  @@index([tradingPairId, timeframe, detectedAt])
+  @@index([strategy, isValid])
+  @@map("pattern_detections")
+}
+
+model StrategyWeight {
+  id            String   @id @default(cuid())
+  strategy      String   @unique
+  weight        Float    @default(1.0) // 0.0 to 2.0
+  isEnabled     Boolean  @default(true)
+  minConfidence Float    @default(60)
+  description   String?  @db.Text
+  lastBacktestId String?
+  lastUpdated   DateTime @default(now())
+  updatedBy     String?  // Admin user ID
+  
+  @@map("strategy_weights")
+}
+
+model SystemHealth {
+  id            String   @id @default(cuid())
+  component     String   // "database", "redis", "api", "websocket", "queue", "external_api"
+  status        String   // "healthy", "degraded", "down"
+  responseTime  Float?   // in milliseconds
+  errorRate     Float?   // percentage
+  message       String?  @db.Text
+  metadata      Json?
+  timestamp     DateTime @default(now())
+  
+  @@index([component, timestamp])
+  @@index([status, timestamp])
+  @@map("system_health")
+}
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  userId        String
+  action        String   // "login", "logout", "create_signal", "update_settings", etc.
+  resource      String?  // Resource affected (e.g., "signal", "user", "subscription")
+  resourceId    String?  // ID of the resource
+  ipAddress     String?
+  userAgent     String?
+  metadata      Json?    // Additional context
+  status        String   @default("success") // "success", "failed"
+  errorMessage  String?  @db.Text
+  timestamp     DateTime @default(now())
+  
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, timestamp])
+  @@index([action, timestamp])
+  @@index([resource, timestamp])
+  @@map("audit_logs")
+}
+
+model Subscription {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  planId        String
+  status        String   // "active", "cancelled", "expired", "past_due"
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean @default(false)
+  stripeSubscriptionId String? @unique
+  stripeCustomerId     String?
+  stripePriceId        String?
+  quantity      Int      @default(1)
+  trialStart    DateTime?
+  trialEnd      DateTime?
+  cancelledAt   DateTime?
+  endedAt       DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan          SubscriptionPlan @relation(fields: [planId], references: [id])
+  
+  @@index([status])
+  @@index([currentPeriodEnd])
+  @@map("subscriptions")
+}
+
+model TelegramConfig {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  botToken      String?  // User's personal bot token (optional)
+  chatId        String?  // User's chat ID
+  username      String?  // Telegram username
+  isVerified    Boolean  @default(false)
+  isEnabled     Boolean  @default(false)
+  notifySignals Boolean  @default(true)
+  notifyNews    Boolean  @default(true)
+  notifyAlerts  Boolean  @default(true)
+  quietHoursStart String? // "22:00"
+  quietHoursEnd   String? // "08:00"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("telegram_configs")
+}
+
+model SupportResistance {
+  id            String   @id @default(cuid())
+  tradingPairId String
+  level         Float
+  type          String   // "support", "resistance"
+  strength      Float    // 0-100 (how many times tested)
+  timeframe     String
+  firstTested   DateTime
+  lastTested    DateTime
+  touchCount    Int      @default(1)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  tradingPair   TradingPair @relation(fields: [tradingPairId], references: [id], onDelete: Cascade)
+  
+  @@index([tradingPairId, timeframe, isActive])
+  @@index([type, strength])
+  @@map("support_resistance")
+}
+
+model PivotPoint {
+  id            String   @id @default(cuid())
+  tradingPairId String
+  timeframe     String
+  date          DateTime
+  pivot         Float    // Main pivot point
+  r1            Float    // Resistance 1
+  r2            Float    // Resistance 2
+  r3            Float    // Resistance 3
+  s1            Float    // Support 1
+  s2            Float    // Support 2
+  s3            Float    // Support 3
+  createdAt     DateTime @default(now())
+  
+  // Relations
+  tradingPair   TradingPair @relation(fields: [tradingPairId], references: [id], onDelete: Cascade)
+  
+  @@unique([tradingPairId, timeframe, date])
+  @@index([tradingPairId, timeframe])
+  @@map("pivot_points")
+}
+
+// Security Models
+model BlockedIP {
+  id        String   @id @default(uuid())
+  ip        String   @unique
+  reason    String
+  blockedAt DateTime @default(now())
+  expiresAt DateTime?
+}
+
+model SecurityLog {
+  id        String   @id @default(uuid())
+  ip        String
+  reason    String
+  details   Json?
+  timestamp DateTime @default(now())
+  
+  @@index([ip, timestamp])
+}
+
+
+
+model ContactMessage {
+  id          String   @id @default(uuid())
+  name        String
+  email       String
+  subject     String
+  message     String   @db.Text
+  status      String   @default("unread") // "unread", "read", "replied"
+  adminReply  String?  @db.Text
+  repliedAt   DateTime?
+  repliedBy   String?
+  createdAt   DateTime @default(now())
+  
+  @@index([status, createdAt])
+  @@map("contact_messages")
+}
+
+model TradingSession {
+  id            String   @id @default(cuid())
+  userId        String
+  startTime     DateTime
+  endTime       DateTime?
+  totalTrades   Int      @default(0)
+  winningTrades Int      @default(0)
+  losingTrades  Int      @default(0)
+  totalProfit   Float    @default(0)
+  totalLoss     Float    @default(0)
+  netProfit     Float    @default(0)
+  winRate       Float    @default(0)
+  largestWin    Float    @default(0)
+  largestLoss   Float    @default(0)
+  averageWin    Float    @default(0)
+  averageLoss   Float    @default(0)
+  profitFactor  Float    @default(0)
+  isActive      Boolean  @default(true)
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, isActive])
+  @@index([startTime])
+  @@map("trading_sessions")
+}
+
+model PerformanceMetrics {
+  id            String   @id @default(cuid())
+  userId        String
+  period        String   // "daily", "weekly", "monthly", "yearly", "all_time"
+  startDate     DateTime
+  endDate       DateTime
+  totalTrades   Int      @default(0)
+  winningTrades Int      @default(0)
+  losingTrades  Int      @default(0)
+  winRate       Float    @default(0)
+  totalProfit   Float    @default(0)
+  totalLoss     Float    @default(0)
+  netProfit     Float    @default(0)
+  profitFactor  Float    @default(0)
+  sharpeRatio   Float?
+  maxDrawdown   Float    @default(0)
+  averageWin    Float    @default(0)
+  averageLoss   Float    @default(0)
+  largestWin    Float    @default(0)
+  largestLoss   Float    @default(0)
+  expectancy    Float    @default(0)
+  riskRewardRatio Float  @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, period, startDate, endDate])
+  @@index([userId, period])
+  @@map("performance_metrics")
+}
+
+model Trade {
+  id            String   @id @default(cuid())
+  userId        String
+  symbol        String
+  type          String   // "BUY", "SELL"
+  entryPrice    Float
+  exitPrice     Float?
+  stopLoss      Float
+  takeProfit    Float
+  size          Float
+  profit        Float?
+  profitPercent Float?
+  status        String   @default("OPEN") // "OPEN", "CLOSED", "CANCELLED"
+  strategy      String?
+  notes         String?  @db.Text
+  openedAt      DateTime @default(now())
+  closedAt      DateTime?
+  
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([symbol])
+  @@map("trades")
+}
+
+// --- ADVANCED FEATURES MODELS ---
+
+model AIProvider {
+  id               String   @id @default(cuid())
+  name             String   // gemini, openai, claude, openrouter
+  displayName      String
+  apiKey           String
+  isActive         Boolean  @default(false)
+  isValidated      Boolean  @default(false)
+  lastValidated    DateTime?
+  requestCount     Int      @default(0)
+  successCount     Int      @default(0)
+  failureCount     Int      @default(0)
+  successRate      Float    @default(0)
+  avgResponseTime  Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@index([name, isActive])
+  @@map("ai_providers")
+}
+
+model SecurityAuditLog {
+  id             String   @id @default(cuid())
+  userId         String?
+  ipAddress      String
+  userAgent      String?
+  action         String   // login_attempt, login_success, login_failure, ip_blocked, etc.
+  details        Json?
+  severity       String   // info, warning, critical
+  timestamp      DateTime @default(now())
+  
+  @@index([userId, timestamp])
+  @@index([ipAddress, timestamp])
+  @@index([action, timestamp])
+  @@map("security_audit_logs")
+}
+
+model ConfluenceAnalysis {
+  id                    String   @id @default(cuid())
+  symbol                String
+  overallTrend          String
+  confluenceScore       Float
+  timeframesAnalyzed    Int
+  bullishTimeframes     Int
+  bearishTimeframes     Int
+  neutralTimeframes     Int
+  signalStrength        String
+  recommendedAction     String
+  entryPrice            Float
+  stopLoss              Float
+  takeProfit1           Float
+  takeProfit2           Float
+  takeProfit3          Float
+  riskRewardRatio       Float
+  detailedAnalysis      Json     // Full TimeframeAnalysis array
+  createdAt             DateTime @default(now())
+  expiresAt             DateTime // Cache expiry (15 min)
+  
+  @@index([symbol, createdAt])
+  @@index([expiresAt])
+  @@map("confluence_analyses")
+}
+
+model SMCDetection {
+  id                String   @id @default(cuid())
+  symbol            String
+  timeframe         String
+  orderBlocks       Json     // Array of OrderBlock objects
+  fairValueGaps     Json     // Array of FairValueGap objects
+  liquiditySweeps   Json     // Array of LiquiditySweep objects
+  breakOfStructure  Json     // Array of BOS objects
+  changeOfCharacter Json     // Array of CHoCH objects
+  createdAt         DateTime @default(now())
+  expiresAt         DateTime
+  
+  @@index([symbol, timeframe, createdAt])
+  @@index([expiresAt])
+  @@map("smc_detections")
+}
+
+model NewsSentiment {
+  id              String   @id @default(cuid())
+  title           String
+  content         String   @db.Text
+  source          String
+  url             String?
+  publishedAt     DateTime
+  sentiment       String   // very_negative, negative, neutral, positive, very_positive
+  confidence      Float
+  numericScore    Float    // -1 to +1
+  provider        String   // gemini, openai, vader, etc.
+  processingTime  Int      // milliseconds
+  keywords        String[]
+  entities        String[]
+  symbolsMentioned String[]
+  createdAt       DateTime @default(now())
+  
+  @@index([publishedAt, sentiment])
+  @@index([symbolsMentioned])
+  @@map("news_sentiments")
+}
+
+model EconomicEvent {
+  id          String   @id @default(cuid())
+  title       String
+  country     String
+  currency    String
+  impact      String   // low, medium, high
+  date        DateTime
+  forecast    String?
+  previous    String?
+  actual      String?
+  description String?  @db.Text
+  source      String?  // "FRED", "ForexFactory"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([date, impact])
+  @@index([currency, date])
+  @@map("economic_events")
+}
+// ============================================
+// MT4/MT5 COPY TRADING SYSTEM
+// ============================================
+
+model MT4Connection {
+  id                String   @id @default(cuid())
+  userId            String
+  apiKey            String   @unique // BRN-MT4-{userId}-{deviceHash}-{random}
+  deviceId          String   @unique // PC fingerprint hash
+  deviceName        String?  // User-friendly name (e.g., "My Trading PC")
+  accountNumber     BigInt   // MT4/MT5 account number
+  platform          String   // "MT4" or "MT5"
+  accountCurrency   String   @default("USD")
+  brokerName        String?
+  brokerServer      String?
+  
+  // Connection Status
+  status            String   @default("pending") // pending, active, suspended, revoked
+  lastHeartbeat     DateTime?
+  lastAccountUpdate DateTime?
+  isOnline          Boolean  @default(false)
+  connectionQuality String   @default("unknown") // excellent, good, poor, offline
+  
+  // Account Metrics (from webhooks)
+  balance           Float    @default(0)
+  equity            Float    @default(0)
+  freeMargin        Float    @default(0)
+  marginLevel       Float    @default(0)
+  leverage          Int      @default(100)
+  profit            Float    @default(0)
+  
+  // Security
+  ipWhitelist       Json?    // Array of allowed IPs
+  rateLimit         Int      @default(10) // requests per second
+  failedAttempts    Int      @default(0)
+  lastFailedAttempt DateTime?
+  suspensionReason  String?
+  
+  // Risk Settings
+  riskPercent       Float    @default(1.0) // % of equity per trade
+  maxLot            Float    @default(0.2)
+  maxOpenTrades     Int      @default(3)
+  dailyLossLimit    Float    @default(5.0) // % of equity
+  allowBuy          Boolean  @default(true)
+  allowSell         Boolean  @default(true)
+  stopAfterMaxLoss  Boolean  @default(true)
+  
+  // Advanced Features
+  breakEvenEnabled  Boolean  @default(false)
+  breakEvenTriggerR Float    @default(1.0) // Move to BE after 1R profit
+  breakEvenPadding  Float    @default(5.0) // Pips above/below entry
+  
+  // TP Management
+  tp1Enabled        Boolean  @default(true)
+  tp2Enabled        Boolean  @default(true)
+  tp3Enabled        Boolean  @default(true)
+  tp4Enabled        Boolean  @default(true)
+  partialCloseTP1   Float    @default(25.0) // % to close at TP1
+  partialCloseTP2   Float    @default(25.0)
+  partialCloseTP3   Float    @default(25.0)
+  partialCloseTP4   Float    @default(25.0)
+  
+  // Metadata
+  eaVersion         String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trades            MT4Trade[]
+  errors            MT4Error[]
+  trailingConfig    TrailingConfig?
+  instructions      TradeInstruction[]
+  
+  @@index([userId])
+  @@index([apiKey])
+  @@index([deviceId])
+  @@index([status])
+  @@index([isOnline])
+  @@map("mt4_connections")
+}
+
+model MT4Trade {
+  id              String   @id @default(cuid())
+  connectionId    String
+  ticket          BigInt   @unique // MT4 ticket number
+  symbol          String
+  type            String   // "buy" or "sell"
+  lots            Float
+  entryPrice      Float
+  currentPrice    Float?
+  stopLoss        Float?
+  takeProfit      Float?
+  tp1             Float?
+  tp2             Float?
+  tp3             Float?
+  tp4             Float?
+  profit          Float    @default(0)
+  commission      Float    @default(0)
+  swap            Float    @default(0)
+  status          String   @default("open") // open, closed, cancelled
+  openTime        DateTime @default(now())
+  closeTime       DateTime?
+  closePrice      Float?
+  closeReason     String?  // "tp_hit", "sl_hit", "manual", "trailing_stop"
+  
+  // Trailing Stop Data
+  trailingActive  Boolean  @default(false)
+  trailingMode    String?  // "atr", "structure", "r_multiple", "hybrid"
+  originalSL      Float?   // Original stop loss
+  trailCount      Int      @default(0) // Number of times SL was moved
+  lastTrailTime   DateTime?
+  
+  // Break-even tracking
+  breakEvenHit    Boolean  @default(false)
+  breakEvenTime   DateTime?
+  
+  // TP tracking
+  tp1Hit          Boolean  @default(false)
+  tp2Hit          Boolean  @default(false)
+  tp3Hit          Boolean  @default(false)
+  tp4Hit          Boolean  @default(false)
+  tp1HitTime      DateTime?
+  tp2HitTime      DateTime?
+  tp3HitTime      DateTime?
+  tp4HitTime      DateTime?
+  
+  // Performance
+  rMultiple       Float?   // Final R achieved
+  maxProfit       Float    @default(0)
+  maxDrawdown     Float    @default(0)
+  
+  // Relations
+  connection      MT4Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  trailingLogs    TrailingLog[]
+  
+  @@index([connectionId])
+  @@index([ticket])
+  @@index([symbol])
+  @@index([status])
+  @@index([openTime])
+  @@map("mt4_trades")
+}
+
+model MT4Error {
+  id              String   @id @default(cuid())
+  connectionId    String
+  errorType       String   // "OrderSendFailure", "OrderModifyFailure", "ConnectionLost", etc.
+  errorCode       Int?     // MT4/MT5 error code
+  message         String   @db.Text
+  ticket          BigInt?  // Related trade ticket
+  context         Json?    // Additional error context
+  timestamp       DateTime @default(now())
+  resolved        Boolean  @default(false)
+  
+  // Relations
+  connection      MT4Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  
+  @@index([connectionId])
+  @@index([errorType])
+  @@index([timestamp])
+  @@map("mt4_errors")
+}
+
+model TradeInstruction {
+  id              String   @id @default(cuid())
+  userId          String
+  connectionId    String
+  action          String   // "open", "close", "modify", "breakeven", "trail", "none"
+  symbol          String?
+  type            String?  // "buy" or "sell"
+  lot             Float?
+  stopLoss        Float?
+  takeProfit      Float?
+  tp1             Float?
+  tp2             Float?
+  tp3             Float?
+  tp4             Float?
+  ticket          BigInt?  // For close/modify actions
+  
+  // Instruction metadata
+  status          String   @default("pending") // pending, sent, executed, failed, cancelled
+  priority        Int      @default(0) // Higher = more urgent
+  retryCount      Int      @default(0)
+  maxRetries      Int      @default(3)
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  sentAt          DateTime?
+  executedAt      DateTime?
+  failedAt        DateTime?
+  
+  // Error tracking
+  error           String?
+  errorCode       Int?
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection      MT4Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([connectionId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("trade_instructions")
+}
+
+// ============================================
+// ADVANCED TRAILING STOP SYSTEM
+// ============================================
+
+model TrailingConfig {
+  id                      String   @id @default(cuid())
+  connectionId            String   @unique
+  
+  // Global Settings
+  enabled                 Boolean  @default(false)
+  mode                    String   @default("hybrid") // "atr", "structure", "breakeven", "r_multiple", "hybrid"
+  
+  // ATR Trailing
+  atrPeriod               Int      @default(14)
+  atrMultiplier           Float    @default(1.5)
+  atrSmoothing            Boolean  @default(true)
+  
+  // Structure Trailing
+  structureSensitivity    String   @default("medium") // "low", "medium", "high"
+  structureMinSwingPips   Float    @default(12.0)
+  structureIgnoreWicks    Boolean  @default(true)
+  
+  // Break-even
+  breakEvenR              Float    @default(1.0)
+  breakEvenPadding        Float    @default(4.0) // Pips
+  breakEvenAutoEnable     Boolean  @default(true)
+  
+  // R-Multiple Trailing
+  trailRStep              Float    @default(0.5) // Trail every 0.5R
+  minTrailDistancePips    Float    @default(10.0)
+  
+  // Pullback Protection
+  maxPullbackPercent      Float    @default(30.0)
+  volatilityFilterEnabled Boolean  @default(true)
+  volatilityThreshold     Float    @default(2.0) // ATR multiplier
+  
+  // Execution Rules
+  onlyTrailOnCandleClose  Boolean  @default(true)
+  delayBetweenModsSec     Int      @default(20)
+  ignoreNoiseUnderPips    Float    @default(6.0)
+  
+  // Advanced Features
+  tpHitTighterTrailing    Boolean  @default(true)
+  tighterTrailMultiplier  Float    @default(0.75) // 25% tighter after TP hit
+  
+  // Telegram Notifications
+  sendTrailingAlerts      Boolean  @default(true)
+  alertOnBreakEven        Boolean  @default(true)
+  alertOnTrailMove        Boolean  @default(true)
+  
+  // Metadata
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  
+  // Relations
+  connection              MT4Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  
+  @@index([connectionId])
+  @@map("trailing_configs")
+}
+
+model TrailingLog {
+  id              String   @id @default(cuid())
+  tradeId         String
+  oldSL           Float
+  newSL           Float
+  reason          String   // "atr_trail", "structure_detected", "breakeven", "r_multiple_step", "tp_hit"
+  atrValue        Float?
+  rMultiple       Float?
+  structureType   String?  // "higher_low", "lower_high"
+  pullbackPercent Float?
+  timestamp       DateTime @default(now())
+  
+  // Relations
+  trade           MT4Trade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  
+  @@index([tradeId])
+  @@index([timestamp])
+  @@map("trailing_logs")
+}
+
+// ============================================
+// TELEGRAM SIGNAL NOTIFICATIONS (Enhanced)
+// ============================================
+
+model SignalNotification {
+  id              String   @id @default(cuid())
+  userId          String
+  signalId        String?
+  tradeId         String?  // For trailing stop notifications
+  type            String   // "new_signal", "trailing_update", "breakeven_hit", "tp_hit", "sl_hit"
+  message         String   @db.Text
+  telegramSent    Boolean  @default(false)
+  telegramSentAt  DateTime?
+  telegramError   String?
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("signal_notifications")
+}
+
