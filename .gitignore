@@ -47,3 +47,4 @@ dev.log
 prompt
 
 server.log
+.env
