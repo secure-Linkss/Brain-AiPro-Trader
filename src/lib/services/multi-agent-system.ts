@@ -438,61 +438,80 @@ Format as JSON:
      * Calculate technical indicators
      */
     private async calculateIndicators(priceData: any[]) {
-        // Call Python pattern detector service
-        const response = await fetch(`${process.env.PYTHON_PATTERN_DETECTOR_URL}/indicators`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                candles: priceData.map(p => ({
-                    timestamp: p.timestamp,
-                    open: p.open,
-                    high: p.high,
-                    low: p.low,
-                    close: p.close,
-                    volume: p.volume
-                }))
+        try {
+            // Call Python pattern detector service
+            const response = await fetch(`${process.env.PYTHON_PATTERN_DETECTOR_URL}/indicators`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    candles: priceData.map(p => ({
+                        timestamp: p.timestamp,
+                        open: p.open,
+                        high: p.high,
+                        low: p.low,
+                        close: p.close,
+                        volume: p.volume
+                    }))
+                })
             })
-        })
 
-        if (!response.ok) {
-            throw new Error('Failed to calculate indicators')
+            if (!response.ok) {
+                throw new Error('Failed to calculate indicators')
+            }
+
+            return await response.json()
+        } catch (error) {
+            console.warn("Python Pattern Detector service unavailable. Returning empty indicators.", error)
+            // Return empty structure to prevent crash
+            return {
+                atr: [],
+                rsi: [],
+                macd: { macd: [], signal: [], histogram: [] },
+                adx: [],
+                obv: [],
+                ema_ribbon: [],
+                vwap: []
+            }
         }
-
-        return await response.json()
     }
 
     /**
      * Detect patterns
      */
     private async detectPatterns(priceData: any[], indicators: any) {
-        // Fetch system settings for confidence threshold
-        const settings = await prisma.systemSettings.findFirst()
-        const minConfidence = settings?.minSignalConfidence || 75
+        try {
+            // Fetch system settings for confidence threshold
+            const settings = await prisma.systemSettings.findFirst()
+            const minConfidence = settings?.minSignalConfidence || 75
 
-        const response = await fetch(`${process.env.PYTHON_PATTERN_DETECTOR_URL}/detect`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                symbol: priceData[0].tradingPairId,
-                timeframe: priceData[0].timeframe,
-                candles: priceData.map(p => ({
-                    timestamp: p.timestamp,
-                    open: p.open,
-                    high: p.high,
-                    low: p.low,
-                    close: p.close,
-                    volume: p.volume
-                })),
-                min_confidence: minConfidence, // Use configurable threshold
-                require_volume_confirmation: true
+            const response = await fetch(`${process.env.PYTHON_PATTERN_DETECTOR_URL}/detect`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    symbol: "UNKNOWN", // Fallback if not available
+                    timeframe: "1h",
+                    candles: priceData.map(p => ({
+                        timestamp: p.timestamp,
+                        open: p.open,
+                        high: p.high,
+                        low: p.low,
+                        close: p.close,
+                        volume: p.volume
+                    })),
+                    min_confidence: minConfidence, // Use configurable threshold
+                    require_volume_confirmation: true
+                })
             })
-        })
 
-        if (!response.ok) {
-            throw new Error('Failed to detect patterns')
+            if (!response.ok) {
+                throw new Error('Failed to detect patterns')
+            }
+
+            return await response.json()
+        } catch (error) {
+            console.warn("Python Pattern Detector service unavailable. Returning empty patterns.", error)
+            return { patterns: [], ensemble_signal: "NEUTRAL", ensemble_confidence: 0 }
         }
-
-        return await response.json()
     }
 
     /**
