@@ -1,186 +1,164 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { ArrowRight, BarChart2, Shield, Zap, Globe, Cpu, Users } from "lucide-react"
+import Navigation from '@/components/layout/Navigation'
+import Footer from '@/components/layout/Footer'
+import Link from 'next/link'
+import { ArrowRight, Brain, TrendingUp, Shield, Zap, BarChart3, Target, Users } from 'lucide-react'
 
-export const dynamic = 'force-dynamic'
+export default function HomePage() {
+    const features = [
+        {
+            icon: Brain,
+            title: 'AI-Powered Analysis',
+            description: 'Advanced machine learning algorithms analyze market patterns with institutional-grade accuracy'
+        },
+        {
+            icon: TrendingUp,
+            title: 'Real-Time Signals',
+            description: 'Get instant trading signals based on 20+ proven strategies and harmonic patterns'
+        },
+        {
+            icon: Shield,
+            title: 'Risk Management',
+            description: 'Built-in stop-loss and take-profit calculations to protect your capital'
+        },
+        {
+            icon: Zap,
+            title: 'Lightning Fast',
+            description: 'Sub-second analysis powered by optimized Python microservices'
+        },
+        {
+            icon: BarChart3,
+            title: 'Multi-Timeframe',
+            description: 'Analyze from 1-minute to daily charts for complete market perspective'
+        },
+        {
+            icon: Target,
+            title: '75%+ Win Rate',
+            description: 'Backtested strategies with proven performance across multiple markets'
+        }
+    ]
 
-export default function LandingPage() {
+    const stats = [
+        { value: '10,000+', label: 'Active Traders' },
+        { value: '75%+', label: 'Win Rate' },
+        { value: '24/7', label: 'Market Coverage' },
+        { value: '20+', label: 'Strategies' }
+    ]
+
     return (
-        <div className="flex flex-col min-h-screen bg-slate-950 text-white">
-            {/* Navigation */}
-            <header className="px-4 lg:px-6 h-16 flex items-center border-b border-slate-800">
-                <Link className="flex items-center justify-center" href="/">
-                    <Cpu className="h-6 w-6 text-blue-500 mr-2" />
-                    <span className="font-bold text-xl">Brain AiPro Trader</span>
-                </Link>
-                <nav className="ml-auto flex gap-4 sm:gap-6">
-                    <Link className="text-sm font-medium hover:text-blue-400 transition-colors" href="/features">
-                        Features
-                    </Link>
-                    <Link className="text-sm font-medium hover:text-blue-400 transition-colors" href="/pricing">
-                        Pricing
-                    </Link>
-                    <Link className="text-sm font-medium hover:text-blue-400 transition-colors" href="/about">
-                        About
-                    </Link>
-                    <Link className="text-sm font-medium hover:text-blue-400 transition-colors" href="/contact">
-                        Contact
-                    </Link>
-                </nav>
-                <div className="ml-4 flex gap-2">
-                    <Link href="/login">
-                        <Button variant="ghost" className="text-white hover:text-blue-400">Log In</Button>
-                    </Link>
-                    <Link href="/signup">
-                        <Button className="bg-blue-600 hover:bg-blue-700">Get Started</Button>
-                    </Link>
+        <div className="min-h-screen bg-primary-900">
+            <Navigation />
+
+            {/* Hero Section */}
+            <section className="relative pt-32 pb-20 px-4 overflow-hidden">
+                {/* Background Effects */}
+                <div className="absolute inset-0 bg-gradient-to-b from-primary-900 via-primary-800 to-primary-900" />
+                <div className="absolute inset-0 opacity-20">
+                    <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500 rounded-full blur-3xl" />
+                    <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600 rounded-full blur-3xl" />
                 </div>
-            </header>
 
-            <main className="flex-1">
-                {/* Hero Section */}
-                <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b from-slate-950 to-slate-900">
-                    <div className="container px-4 md:px-6">
-                        <div className="flex flex-col items-center space-y-4 text-center">
-                            <div className="space-y-2">
-                                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
-                                    Trade Smarter with AI Precision
-                                </h1>
-                                <p className="mx-auto max-w-[700px] text-slate-400 md:text-xl">
-                                    Advanced AI agents, sniper entries, and institutional-grade risk management.
-                                    Stop guessing and start trading with the power of Brain AiPro.
-                                </p>
-                            </div>
-                            <div className="space-x-4">
-                                <Link href="/signup">
-                                    <Button className="bg-blue-600 hover:bg-blue-700 h-11 px-8">
-                                        Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
-                                    </Button>
-                                </Link>
-                                <Link href="/features">
-                                    <Button variant="outline" className="border-slate-700 text-white hover:bg-slate-800 h-11 px-8">
-                                        Explore Features
-                                    </Button>
-                                </Link>
-                            </div>
+                <div className="container mx-auto relative z-10">
+                    <div className="max-w-4xl mx-auto text-center">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full mb-8 animate-fadeIn">
+                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                            <span className="text-sm text-gray-300">AI Trading Intelligence Platform</span>
+                        </div>
+
+                        <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+                            Trade Smarter with
+                            <span className="block bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+                                AI-Powered Insights
+                            </span>
+                        </h1>
+
+                        <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
+                            Advanced pattern recognition, real-time signals, and institutional-grade analysis.
+                            Make data-driven trading decisions with confidence.
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <Link
+                                href="/register"
+                                className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-lg font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/50 transition-all hover:-translate-y-1 inline-flex items-center justify-center gap-2"
+                            >
+                                Get Started Free
+                                <ArrowRight size={20} />
+                            </Link>
+                            <Link
+                                href="/features"
+                                className="px-8 py-4 bg-white/5 border border-white/20 text-white text-lg font-semibold rounded-lg hover:bg-white/10 transition-all inline-flex items-center justify-center gap-2"
+                            >
+                                Explore Features
+                            </Link>
+                        </div>
+
+                        {/* Stats */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16">
+                            {stats.map((stat, index) => (
+                                <div key={index} className="text-center">
+                                    <div className="text-3xl md:text-4xl font-bold text-white mb-2">{stat.value}</div>
+                                    <div className="text-sm text-gray-400">{stat.label}</div>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                </section>
+                </div>
+            </section>
 
-                {/* Features Grid */}
-                <section className="w-full py-12 md:py-24 lg:py-32 bg-slate-950">
-                    <div className="container px-4 md:px-6">
-                        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-                            <div className="flex flex-col items-center space-y-4 text-center p-6 bg-slate-900 rounded-xl border border-slate-800 hover:border-blue-500/50 transition-all">
-                                <div className="p-3 bg-blue-500/10 rounded-full">
-                                    <Cpu className="h-8 w-8 text-blue-500" />
-                                </div>
-                                <h3 className="text-xl font-bold">Multi-Agent AI</h3>
-                                <p className="text-slate-400">
-                                    5 specialized AI agents analyze Forex, Crypto, Stocks, and Commodities 24/7 to find the best opportunities.
-                                </p>
-                            </div>
-                            <div className="flex flex-col items-center space-y-4 text-center p-6 bg-slate-900 rounded-xl border border-slate-800 hover:border-purple-500/50 transition-all">
-                                <div className="p-3 bg-purple-500/10 rounded-full">
-                                    <Target className="h-8 w-8 text-purple-500" />
-                                </div>
-                                <h3 className="text-xl font-bold">Sniper Entries</h3>
-                                <p className="text-slate-400">
-                                    Precision entry points validated by volume, momentum, and market structure. No more drawdown.
-                                </p>
-                            </div>
-                            <div className="flex flex-col items-center space-y-4 text-center p-6 bg-slate-900 rounded-xl border border-slate-800 hover:border-green-500/50 transition-all">
-                                <div className="p-3 bg-green-500/10 rounded-full">
-                                    <Shield className="h-8 w-8 text-green-500" />
-                                </div>
-                                <h3 className="text-xl font-bold">Smart Risk Management</h3>
-                                <p className="text-slate-400">
-                                    Capital-based lot sizing and dynamic position management to protect your account and maximize growth.
-                                </p>
-                            </div>
-                            <div className="flex flex-col items-center space-y-4 text-center p-6 bg-slate-900 rounded-xl border border-slate-800 hover:border-yellow-500/50 transition-all">
-                                <div className="p-3 bg-yellow-500/10 rounded-full">
-                                    <Zap className="h-8 w-8 text-yellow-500" />
-                                </div>
-                                <h3 className="text-xl font-bold">Instant Alerts</h3>
-                                <p className="text-slate-400">
-                                    Get signals instantly via Telegram, SMS, or Email. Never miss a trade setup again.
-                                </p>
-                            </div>
-                            <div className="flex flex-col items-center space-y-4 text-center p-6 bg-slate-900 rounded-xl border border-slate-800 hover:border-red-500/50 transition-all">
-                                <div className="p-3 bg-red-500/10 rounded-full">
-                                    <BarChart2 className="h-8 w-8 text-red-500" />
-                                </div>
-                                <h3 className="text-xl font-bold">Advanced Charting</h3>
-                                <p className="text-slate-400">
-                                    Professional charts with auto-detected patterns, support/resistance zones, and pivot points.
-                                </p>
-                            </div>
-                            <div className="flex flex-col items-center space-y-4 text-center p-6 bg-slate-900 rounded-xl border border-slate-800 hover:border-cyan-500/50 transition-all">
-                                <div className="p-3 bg-cyan-500/10 rounded-full">
-                                    <Globe className="h-8 w-8 text-cyan-500" />
-                                </div>
-                                <h3 className="text-xl font-bold">Global Markets</h3>
-                                <p className="text-slate-400">
-                                    Trade everything from one platform. Forex, Crypto, Indices, Metals, and Energies.
-                                </p>
-                            </div>
-                        </div>
+            {/* Features Section */}
+            <section className="py-20 px-4 bg-primary-800/50">
+                <div className="container mx-auto">
+                    <div className="text-center mb-16">
+                        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                            Everything You Need to Trade Successfully
+                        </h2>
+                        <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                            Powerful tools and features designed for both beginners and professional traders
+                        </p>
                     </div>
-                </section>
 
-                {/* CTA Section */}
-                <section className="w-full py-12 md:py-24 lg:py-32 bg-blue-600">
-                    <div className="container px-4 md:px-6">
-                        <div className="flex flex-col items-center space-y-4 text-center text-white">
-                            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                                Ready to Upgrade Your Trading?
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {features.map((feature, index) => (
+                            <div
+                                key={index}
+                                className="p-8 bg-primary-800/60 border border-white/10 rounded-2xl hover:border-blue-500/50 transition-all hover:-translate-y-1 group"
+                            >
+                                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                    <feature.icon className="text-white" size={28} />
+                                </div>
+                                <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
+                                <p className="text-gray-400">{feature.description}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* CTA Section */}
+            <section className="py-20 px-4">
+                <div className="container mx-auto">
+                    <div className="max-w-4xl mx-auto bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl p-12 text-center relative overflow-hidden">
+                        <div className="absolute inset-0 bg-black/20" />
+                        <div className="relative z-10">
+                            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                                Ready to Transform Your Trading?
                             </h2>
-                            <p className="mx-auto max-w-[600px] text-blue-100 md:text-xl">
-                                Join thousands of traders using Brain AiPro to consistently profit from the markets.
+                            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+                                Join thousands of traders using AI-powered analysis to make smarter decisions
                             </p>
-                            <Link href="/signup">
-                                <Button className="bg-white text-blue-600 hover:bg-slate-100 h-11 px-8 font-bold">
-                                    Get Started Now
-                                </Button>
+                            <Link
+                                href="/register"
+                                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 text-lg font-semibold rounded-lg hover:bg-gray-100 transition-all hover:-translate-y-1"
+                            >
+                                Start Trading Smarter
+                                <ArrowRight size={20} />
                             </Link>
                         </div>
                     </div>
-                </section>
-            </main>
+                </div>
+            </section>
 
-            <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t border-slate-800">
-                <p className="text-xs text-slate-500">© 2025 Brain AiPro Trader. All rights reserved.</p>
-                <nav className="sm:ml-auto flex gap-4 sm:gap-6">
-                    <Link className="text-xs hover:underline underline-offset-4 text-slate-500 hover:text-slate-300" href="/legal/terms">
-                        Terms of Service
-                    </Link>
-                    <Link className="text-xs hover:underline underline-offset-4 text-slate-500 hover:text-slate-300" href="/legal/privacy">
-                        Privacy
-                    </Link>
-                </nav>
-            </footer>
+            <Footer />
         </div>
-    )
-}
-
-function Target(props: any) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <circle cx="12" cy="12" r="10" />
-            <circle cx="12" cy="12" r="6" />
-            <circle cx="12" cy="12" r="2" />
-        </svg>
     )
 }
