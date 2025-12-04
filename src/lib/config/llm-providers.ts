@@ -30,13 +30,30 @@ export interface LLMProviderConfig {
 // Default LLM Provider Configuration
 export const DEFAULT_LLM_CONFIG: LLMProviderConfig = {
     providers: [
+        // LOCAL LLM (No API key required, runs on your machine)
+        {
+            id: 'ollama-local',
+            name: 'Ollama (Local - FREE)',
+            baseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
+            model: process.env.OLLAMA_MODEL || 'llama3.1:8b',
+            enabled: true, // Always enabled, no API key needed
+            priority: 0, // HIGHEST priority - use local LLM first
+            isFree: true,
+            maxTokens: 8000,
+            temperature: 0.7,
+            rateLimit: {
+                requestsPerMinute: 999999, // No limits for local
+                requestsPerDay: 999999
+            }
+        },
+
         // FREE PROVIDERS (No API key required or free tier)
         {
             id: 'groq',
             name: 'Groq (Free)',
             baseUrl: 'https://api.groq.com/openai/v1',
             model: 'llama-3.1-70b-versatile',
-            enabled: true,
+            enabled: !!(process.env.GROQ_API_KEY && process.env.GROQ_API_KEY !== 'gsk_free'),
             priority: 1,
             isFree: true,
             maxTokens: 8000,
@@ -51,7 +68,7 @@ export const DEFAULT_LLM_CONFIG: LLMProviderConfig = {
             name: 'HuggingFace Inference (Free)',
             baseUrl: 'https://api-inference.huggingface.co/models',
             model: 'meta-llama/Llama-2-70b-chat-hf',
-            enabled: true,
+            enabled: !!process.env.HUGGINGFACE_API_KEY,
             priority: 2,
             isFree: true,
             maxTokens: 4096,
@@ -66,7 +83,7 @@ export const DEFAULT_LLM_CONFIG: LLMProviderConfig = {
             name: 'Together AI (Free Tier)',
             baseUrl: 'https://api.together.xyz/v1',
             model: 'meta-llama/Llama-3-70b-chat-hf',
-            enabled: true,
+            enabled: !!process.env.TOGETHER_API_KEY,
             priority: 3,
             isFree: true,
             maxTokens: 8000,

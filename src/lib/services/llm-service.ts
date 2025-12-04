@@ -122,6 +122,9 @@ class LLMService {
     ): Promise<{ content: string; tokensUsed: number }> {
 
         switch (provider.id) {
+            case 'ollama-local':
+                return this.callOllama(provider, request)
+
             case 'groq':
                 return this.callGroq(provider, request)
 
@@ -146,6 +149,43 @@ class LLMService {
 
             default:
                 throw new Error(`Unknown provider: ${provider.id}`)
+        }
+    }
+
+    /**
+     * Ollama API (Local - FREE)
+     */
+    private async callOllama(
+        provider: LLMProvider,
+        request: LLMRequest
+    ): Promise<{ content: string; tokensUsed: number }> {
+        const response = await fetch(`${provider.baseUrl}/api/generate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: provider.model,
+                prompt: request.systemPrompt
+                    ? `${request.systemPrompt}\n\nUser: ${request.prompt}\n\nAssistant:`
+                    : request.prompt,
+                stream: false,
+                options: {
+                    temperature: request.temperature || provider.temperature,
+                    num_predict: request.maxTokens || provider.maxTokens,
+                    stop: request.stopSequences
+                }
+            })
+        })
+
+        if (!response.ok) {
+            throw new Error(`Ollama API error: ${response.statusText}`)
+        }
+
+        const data = await response.json()
+        return {
+            content: data.response,
+            tokensUsed: data.eval_count || 0
         }
     }
 
