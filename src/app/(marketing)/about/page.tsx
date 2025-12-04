@@ -1,69 +1,58 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Users, Award, TrendingUp } from "lucide-react"
+import Navigation from '@/components/layout/Navigation'
+import Footer from '@/components/layout/Footer'
 
 export default function AboutPage() {
     return (
-        <div className="flex flex-col min-h-screen bg-slate-950 text-white">
-            <header className="px-4 lg:px-6 h-16 flex items-center border-b border-slate-800">
-                <Link className="font-bold text-xl" href="/">Brain AiPro Trader</Link>
-                <nav className="ml-auto flex gap-4 sm:gap-6">
-                    <Link className="text-sm font-medium hover:text-blue-400" href="/">Home</Link>
-                    <Link className="text-sm font-medium hover:text-blue-400" href="/contact">Contact</Link>
-                </nav>
-            </header>
+        <div className="min-h-screen bg-primary-900">
+            <Navigation />
 
-            <main className="flex-1 py-12 md:py-24">
-                <div className="container px-4 md:px-6">
-                    <div className="max-w-3xl mx-auto text-center mb-16">
-                        <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl mb-6">
-                            Democratizing Institutional Trading Intelligence
-                        </h1>
-                        <p className="text-slate-400 text-lg">
-                            We believe that retail traders deserve the same powerful tools and insights used by Wall Street hedge funds.
+            <section className="pt-32 pb-20 px-4">
+                <div className="container mx-auto max-w-4xl">
+                    <h1 className="text-5xl md:text-6xl font-bold text-white mb-8">About Brain AiPro Trader</h1>
+
+                    <div className="space-y-6 text-gray-300 text-lg">
+                        <p>
+                            Brain AiPro Trader is a cutting-edge AI-powered trading analysis platform designed to help traders make smarter, data-driven decisions in the financial markets.
+                        </p>
+
+                        <p>
+                            Founded in 2024, our mission is to democratize access to institutional-grade trading intelligence by combining advanced machine learning, technical analysis, and real-time market data.
+                        </p>
+
+                        <h2 className="text-3xl font-bold text-white mt-12 mb-6">Our Technology</h2>
+                        <p>
+                            Our platform leverages state-of-the-art AI algorithms trained on millions of historical market patterns. We use advanced harmonic pattern detection, ensemble voting systems, and multi-strategy analysis to generate high-confidence trading signals.
+                        </p>
+
+                        <h2 className="text-3xl font-bold text-white mt-12 mb-6">Why Choose Us</h2>
+                        <ul className="space-y-4">
+                            <li className="flex items-start gap-3">
+                                <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+                                <span><strong className="text-white">Advanced AI:</strong> Machine learning models trained on decades of market data</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+                                <span><strong className="text-white">Real-Time Analysis:</strong> Sub-second response times for instant insights</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+                                <span><strong className="text-white">Proven Results:</strong> 75%+ win rate across backtested strategies</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+                                <span><strong className="text-white">Enterprise Security:</strong> Bank-level encryption and SOC 2 compliance</span>
+                            </li>
+                        </ul>
+
+                        <h2 className="text-3xl font-bold text-white mt-12 mb-6">Our Commitment</h2>
+                        <p>
+                            We're committed to continuous improvement and innovation. Our team of experienced traders, data scientists, and engineers work tirelessly to enhance our platform and provide you with the best possible trading experience.
                         </p>
                     </div>
-
-                    <div className="grid md:grid-cols-3 gap-8 mb-24">
-                        <div className="bg-slate-900 p-8 rounded-xl border border-slate-800 text-center">
-                            <Users className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-                            <h3 className="text-xl font-bold mb-2">Our Mission</h3>
-                            <p className="text-slate-400">
-                                To empower traders worldwide with AI-driven insights that level the playing field against institutional algorithms.
-                            </p>
-                        </div>
-                        <div className="bg-slate-900 p-8 rounded-xl border border-slate-800 text-center">
-                            <Award className="h-12 w-12 text-purple-500 mx-auto mb-4" />
-                            <h3 className="text-xl font-bold mb-2">Our Quality</h3>
-                            <p className="text-slate-400">
-                                We don't just generate signals. We validate them with multi-factor analysis to ensure only the highest probability setups reach you.
-                            </p>
-                        </div>
-                        <div className="bg-slate-900 p-8 rounded-xl border border-slate-800 text-center">
-                            <TrendingUp className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                            <h3 className="text-xl font-bold mb-2">Our Vision</h3>
-                            <p className="text-slate-400">
-                                A world where AI handles the complex analysis, allowing traders to focus on strategy and execution.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="max-w-4xl mx-auto">
-                        <h2 className="text-3xl font-bold mb-8 text-center">The Story Behind Brain AiPro</h2>
-                        <div className="prose prose-invert max-w-none">
-                            <p className="text-slate-300 text-lg leading-relaxed mb-6">
-                                Brain AiPro Trader started with a simple question: "Why do retail traders lose money while institutions profit?" The answer wasn't just capital—it was information and processing power.
-                            </p>
-                            <p className="text-slate-300 text-lg leading-relaxed mb-6">
-                                Institutions use supercomputers to analyze news, sentiment, and price action in milliseconds. Retail traders use manual charts and gut feeling. We set out to bridge this gap.
-                            </p>
-                            <p className="text-slate-300 text-lg leading-relaxed mb-6">
-                                By leveraging the latest advancements in Large Language Models (LLMs) and machine learning, we've built a system that reads the market like a seasoned veteran but processes data like a supercomputer. Our agents don't sleep, don't get emotional, and don't miss opportunities.
-                            </p>
-                        </div>
-                    </div>
                 </div>
-            </main>
+            </section>
+
+            <Footer />
         </div>
     )
 }

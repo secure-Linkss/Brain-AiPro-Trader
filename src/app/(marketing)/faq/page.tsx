@@ -1,62 +1,138 @@
-import Link from "next/link"
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion"
+"use client"
+
+import Navigation from '@/components/layout/Footer'
+import Footer from '@/components/layout/Footer'
+import { useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 
 export default function FAQPage() {
+    const [openIndex, setOpenIndex] = useState<number | null>(0)
+
+    const faqs = [
+        {
+            category: 'General',
+            questions: [
+                {
+                    q: 'What is Brain AiPro Trader?',
+                    a: 'Brain AiPro Trader is an AI-powered trading analysis platform that provides real-time signals, pattern detection, and market insights to help traders make better decisions.'
+                },
+                {
+                    q: 'Do I need trading experience to use this platform?',
+                    a: 'While our platform is designed to be user-friendly, we recommend having basic knowledge of trading concepts. We provide educational resources to help beginners get started.'
+                },
+                {
+                    q: 'What markets do you support?',
+                    a: 'We support Forex, Cryptocurrencies, Stocks, and Commodities. Our AI analyzes all major trading pairs and assets.'
+                }
+            ]
+        },
+        {
+            category: 'Features',
+            questions: [
+                {
+                    q: 'How accurate are the trading signals?',
+                    a: 'Our backtested strategies show a 75%+ win rate. However, past performance does not guarantee future results. Always use proper risk management.'
+                },
+                {
+                    q: 'What harmonic patterns do you detect?',
+                    a: 'We detect 9 major harmonic patterns: Gartley, Butterfly, Bat, Crab, Cypher, Shark, 5-0, AB=CD, and Three Drives, all with Fibonacci validation.'
+                },
+                {
+                    q: 'Can I backtest my own strategies?',
+                    a: 'Yes, Pro and Enterprise plans include access to our backtesting engine with 10+ years of historical data.'
+                }
+            ]
+        },
+        {
+            category: 'Pricing & Billing',
+            questions: [
+                {
+                    q: 'Is there a free trial?',
+                    a: 'We offer a free plan with limited features. You can upgrade to Pro or Enterprise at any time to unlock advanced features.'
+                },
+                {
+                    q: 'Can I cancel anytime?',
+                    a: 'Yes, you can cancel your subscription at any time. There are no long-term contracts or cancellation fees.'
+                },
+                {
+                    q: 'Do you offer refunds?',
+                    a: 'Yes, we offer a 30-day money-back guarantee if you\'re not satisfied with our service.'
+                }
+            ]
+        },
+        {
+            category: 'Technical',
+            questions: [
+                {
+                    q: 'Do you have an API?',
+                    a: 'Yes, Pro and Enterprise plans include API access. Our REST API allows you to integrate our signals into your own applications.'
+                },
+                {
+                    q: 'How fast are the signals?',
+                    a: 'Our platform provides sub-second analysis with real-time WebSocket updates for instant notifications.'
+                },
+                {
+                    q: 'Is my data secure?',
+                    a: 'Yes, we use bank-level encryption, SOC 2 compliance, and industry-standard security practices to protect your data.'
+                }
+            ]
+        }
+    ]
+
     return (
-        <div className="flex flex-col min-h-screen bg-slate-950 text-white">
-            <header className="px-4 lg:px-6 h-16 flex items-center border-b border-slate-800">
-                <Link className="font-bold text-xl" href="/">Brain AiPro Trader</Link>
-                <nav className="ml-auto flex gap-4 sm:gap-6">
-                    <Link className="text-sm font-medium hover:text-blue-400" href="/">Home</Link>
-                    <Link className="text-sm font-medium hover:text-blue-400" href="/contact">Contact</Link>
-                </nav>
-            </header>
+        <div className="min-h-screen bg-primary-900">
+            <Navigation />
 
-            <main className="flex-1 py-12 md:py-24 container px-4 md:px-6 max-w-4xl mx-auto">
-                <h1 className="text-3xl font-bold mb-8 text-center">Frequently Asked Questions</h1>
+            <section className="pt-32 pb-20 px-4">
+                <div className="container mx-auto max-w-4xl">
+                    <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 text-center">
+                        Frequently Asked Questions
+                    </h1>
+                    <p className="text-xl text-gray-400 text-center mb-12">
+                        Find answers to common questions about our platform
+                    </p>
 
-                <Accordion type="single" collapsible className="w-full space-y-4">
-                    <AccordionItem value="item-1" className="border-slate-800">
-                        <AccordionTrigger className="text-lg font-medium">How accurate are the AI signals?</AccordionTrigger>
-                        <AccordionContent className="text-slate-400">
-                            Our AI models are trained on historical data and real-time market conditions. While no system is 100% accurate, our multi-agent validation process aims for a high win rate (typically 70-85%). We prioritize quality over quantity.
-                        </AccordionContent>
-                    </AccordionItem>
+                    <div className="space-y-8">
+                        {faqs.map((category, catIndex) => (
+                            <div key={catIndex}>
+                                <h2 className="text-2xl font-bold text-white mb-4">{category.category}</h2>
+                                <div className="space-y-4">
+                                    {category.questions.map((faq, qIndex) => {
+                                        const globalIndex = catIndex * 100 + qIndex
+                                        const isOpen = openIndex === globalIndex
 
-                    <AccordionItem value="item-2" className="border-slate-800">
-                        <AccordionTrigger className="text-lg font-medium">Do I need trading experience?</AccordionTrigger>
-                        <AccordionContent className="text-slate-400">
-                            Not necessarily. Our platform is designed to be user-friendly for beginners while offering advanced tools for pros. We provide clear entry, stop-loss, and take-profit levels for every signal.
-                        </AccordionContent>
-                    </AccordionItem>
+                                        return (
+                                            <div
+                                                key={qIndex}
+                                                className="bg-primary-800/60 border border-white/10 rounded-xl overflow-hidden"
+                                            >
+                                                <button
+                                                    onClick={() => setOpenIndex(isOpen ? null : globalIndex)}
+                                                    className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors"
+                                                >
+                                                    <span className="text-lg font-semibold text-white pr-8">{faq.q}</span>
+                                                    <ChevronDown
+                                                        className={`text-gray-400 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''
+                                                            }`}
+                                                        size={24}
+                                                    />
+                                                </button>
+                                                {isOpen && (
+                                                    <div className="px-6 pb-6">
+                                                        <p className="text-gray-300">{faq.a}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
 
-                    <AccordionItem value="item-3" className="border-slate-800">
-                        <AccordionTrigger className="text-lg font-medium">What markets do you cover?</AccordionTrigger>
-                        <AccordionContent className="text-slate-400">
-                            We cover major and minor Forex pairs, top Cryptocurrencies (BTC, ETH, SOL, etc.), major Stock Indices (US30, NAS100, SPX500), and Commodities (Gold, Oil).
-                        </AccordionContent>
-                    </AccordionItem>
-
-                    <AccordionItem value="item-4" className="border-slate-800">
-                        <AccordionTrigger className="text-lg font-medium">How do I receive alerts?</AccordionTrigger>
-                        <AccordionContent className="text-slate-400">
-                            You can receive instant alerts via Telegram, Email, or SMS. You can configure your preferences in the dashboard settings.
-                        </AccordionContent>
-                    </AccordionItem>
-
-                    <AccordionItem value="item-5" className="border-slate-800">
-                        <AccordionTrigger className="text-lg font-medium">Can I cancel my subscription?</AccordionTrigger>
-                        <AccordionContent className="text-slate-400">
-                            Yes, you can cancel your subscription at any time from your account settings. You will retain access until the end of your billing period.
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-            </main>
+            <Footer />
         </div>
     )
 }

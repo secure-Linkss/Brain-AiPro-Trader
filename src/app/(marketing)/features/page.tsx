@@ -1,122 +1,131 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Cpu, Shield, Zap, BarChart2, Globe, Target, Bell, Smartphone } from "lucide-react"
+import Navigation from '@/components/layout/Navigation'
+import Footer from '@/components/layout/Footer'
+import { Brain, TrendingUp, Shield, Zap, BarChart3, Target, Bell, Code, Lock, Cpu, LineChart, Users } from 'lucide-react'
 
 export default function FeaturesPage() {
+    const features = [
+        {
+            icon: Brain,
+            title: 'Advanced AI Analysis',
+            description: 'Machine learning algorithms trained on millions of market patterns for accurate predictions',
+            details: ['Neural network pattern recognition', 'Sentiment analysis', 'Predictive modeling']
+        },
+        {
+            icon: TrendingUp,
+            title: 'Harmonic Patterns',
+            description: '9 advanced harmonic patterns including Gartley, Butterfly, Bat, Crab, and more',
+            details: ['Fibonacci validation', 'Confidence scoring', 'Entry/Stop/Target calculations']
+        },
+        {
+            icon: BarChart3,
+            title: 'Technical Indicators',
+            description: '20+ professional indicators with advanced implementations',
+            details: ['RSI with divergence', 'MACD crossovers', 'ATR bands', 'ADX trend strength']
+        },
+        {
+            icon: Shield,
+            title: 'Risk Management',
+            description: 'Built-in risk controls to protect your capital',
+            details: ['Auto stop-loss calculation', 'Position sizing', 'Risk/reward ratios']
+        },
+        {
+            icon: Zap,
+            title: 'Real-Time Signals',
+            description: 'Lightning-fast analysis with sub-second response times',
+            details: ['WebSocket updates', 'Optimized Python backend', 'Instant notifications']
+        },
+        {
+            icon: Target,
+            title: 'Multi-Strategy',
+            description: 'Ensemble voting system combining 20+ proven strategies',
+            details: ['Momentum strategies', 'Trend following', 'Mean reversion']
+        },
+        {
+            icon: Bell,
+            title: 'Smart Alerts',
+            description: 'Get notified instantly when opportunities arise',
+            details: ['Email notifications', 'SMS alerts', 'Telegram integration']
+        },
+        {
+            icon: Code,
+            title: 'API Access',
+            description: 'Full REST API for custom integrations',
+            details: ['Complete documentation', 'Rate limiting', 'Webhook support']
+        },
+        {
+            icon: Lock,
+            title: 'Enterprise Security',
+            description: 'Bank-level security for your data',
+            details: ['End-to-end encryption', 'SOC 2 compliant', '2FA authentication']
+        },
+        {
+            icon: Cpu,
+            title: 'Backtesting Engine',
+            description: 'Test strategies on historical data',
+            details: ['10+ years of data', 'Walk-forward analysis', 'Performance metrics']
+        },
+        {
+            icon: LineChart,
+            title: 'Multi-Timeframe',
+            description: 'Analyze from 1-minute to monthly charts',
+            details: ['Timeframe alignment', 'Trend confirmation', 'Support/resistance levels']
+        },
+        {
+            icon: Users,
+            title: 'Copy Trading',
+            description: 'Follow successful traders automatically',
+            details: ['Real-time copying', 'Risk controls', 'Performance tracking']
+        }
+    ]
+
     return (
-        <div className="flex flex-col min-h-screen bg-slate-950 text-white">
-            <header className="px-4 lg:px-6 h-16 flex items-center border-b border-slate-800">
-                <Link className="font-bold text-xl" href="/">Brain AiPro Trader</Link>
-                <nav className="ml-auto flex gap-4 sm:gap-6">
-                    <Link className="text-sm font-medium hover:text-blue-400" href="/">Home</Link>
-                    <Link className="text-sm font-medium hover:text-blue-400" href="/pricing">Pricing</Link>
-                </nav>
-            </header>
+        <div className="min-h-screen bg-primary-900">
+            <Navigation />
 
-            <main className="flex-1 py-12 md:py-24">
-                <div className="container px-4 md:px-6">
-                    <div className="text-center mb-16">
-                        <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl mb-4">
-                            Institutional-Grade Features
-                        </h1>
-                        <p className="text-slate-400 max-w-2xl mx-auto text-lg">
-                            Built for traders who demand precision, speed, and reliability.
-                        </p>
-                    </div>
+            {/* Hero */}
+            <section className="pt-32 pb-20 px-4">
+                <div className="container mx-auto text-center">
+                    <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
+                        Powerful Features for
+                        <span className="block bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+                            Professional Trading
+                        </span>
+                    </h1>
+                    <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+                        Everything you need to analyze markets, identify opportunities, and execute trades with confidence
+                    </p>
+                </div>
+            </section>
 
-                    <div className="space-y-24">
-                        {/* Feature 1: Multi-Agent AI */}
-                        <div className="grid md:grid-cols-2 gap-12 items-center">
-                            <div className="space-y-4">
-                                <div className="inline-flex items-center rounded-lg bg-blue-900/30 px-3 py-1 text-sm font-medium text-blue-400">
-                                    <Cpu className="mr-2 h-4 w-4" /> AI Powered
+            {/* Features Grid */}
+            <section className="pb-20 px-4">
+                <div className="container mx-auto">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {features.map((feature, index) => (
+                            <div
+                                key={index}
+                                className="p-8 bg-primary-800/60 border border-white/10 rounded-2xl hover:border-blue-500/50 transition-all hover:-translate-y-1 group"
+                            >
+                                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                    <feature.icon className="text-white" size={28} />
                                 </div>
-                                <h2 className="text-3xl font-bold">5 Specialized AI Agents</h2>
-                                <p className="text-slate-400 text-lg">
-                                    Our multi-agent system doesn't just look at price. It analyzes market structure, news sentiment, and technical indicators simultaneously.
-                                </p>
+                                <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
+                                <p className="text-gray-400 mb-4">{feature.description}</p>
                                 <ul className="space-y-2">
-                                    <li className="flex items-center text-slate-300"><div className="h-2 w-2 bg-blue-500 rounded-full mr-2" /> Forex Analyst Agent</li>
-                                    <li className="flex items-center text-slate-300"><div className="h-2 w-2 bg-purple-500 rounded-full mr-2" /> Crypto Analyst Agent</li>
-                                    <li className="flex items-center text-slate-300"><div className="h-2 w-2 bg-green-500 rounded-full mr-2" /> Stock Market Agent</li>
-                                    <li className="flex items-center text-slate-300"><div className="h-2 w-2 bg-yellow-500 rounded-full mr-2" /> Commodities Agent</li>
+                                    {feature.details.map((detail, i) => (
+                                        <li key={i} className="text-sm text-gray-500 flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                                            {detail}
+                                        </li>
+                                    ))}
                                 </ul>
                             </div>
-                            <div className="bg-slate-900 rounded-xl border border-slate-800 p-8 h-80 flex items-center justify-center relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <Cpu className="h-32 w-32 text-slate-700 group-hover:text-blue-500 transition-colors duration-500" />
-                            </div>
-                        </div>
-
-                        {/* Feature 2: Sniper Entries */}
-                        <div className="grid md:grid-cols-2 gap-12 items-center md:flex-row-reverse">
-                            <div className="order-2 md:order-1 bg-slate-900 rounded-xl border border-slate-800 p-8 h-80 flex items-center justify-center relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <Target className="h-32 w-32 text-slate-700 group-hover:text-red-500 transition-colors duration-500" />
-                            </div>
-                            <div className="space-y-4 order-1 md:order-2">
-                                <div className="inline-flex items-center rounded-lg bg-red-900/30 px-3 py-1 text-sm font-medium text-red-400">
-                                    <Target className="mr-2 h-4 w-4" /> Precision
-                                </div>
-                                <h2 className="text-3xl font-bold">Sniper Entry System</h2>
-                                <p className="text-slate-400 text-lg">
-                                    Stop entering trades too early or too late. Our Sniper Entry system validates every signal against 7 critical factors.
-                                </p>
-                                <ul className="space-y-2">
-                                    <li className="flex items-center text-slate-300"><div className="h-2 w-2 bg-red-500 rounded-full mr-2" /> Support/Resistance Validation</li>
-                                    <li className="flex items-center text-slate-300"><div className="h-2 w-2 bg-red-500 rounded-full mr-2" /> Volume Confirmation</li>
-                                    <li className="flex items-center text-slate-300"><div className="h-2 w-2 bg-red-500 rounded-full mr-2" /> Momentum Alignment</li>
-                                    <li className="flex items-center text-slate-300"><div className="h-2 w-2 bg-red-500 rounded-full mr-2" /> Time-of-Day Liquidity Check</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        {/* Feature 3: Risk Management */}
-                        <div className="grid md:grid-cols-2 gap-12 items-center">
-                            <div className="space-y-4">
-                                <div className="inline-flex items-center rounded-lg bg-green-900/30 px-3 py-1 text-sm font-medium text-green-400">
-                                    <Shield className="mr-2 h-4 w-4" /> Protection
-                                </div>
-                                <h2 className="text-3xl font-bold">Capital-Based Risk Management</h2>
-                                <p className="text-slate-400 text-lg">
-                                    Protect your capital like a pro. The system automatically calculates the perfect lot size based on your account balance and risk tolerance.
-                                </p>
-                                <ul className="space-y-2">
-                                    <li className="flex items-center text-slate-300"><div className="h-2 w-2 bg-green-500 rounded-full mr-2" /> Auto Lot Size Calculation</li>
-                                    <li className="flex items-center text-slate-300"><div className="h-2 w-2 bg-green-500 rounded-full mr-2" /> Dynamic Stop Loss Placement</li>
-                                    <li className="flex items-center text-slate-300"><div className="h-2 w-2 bg-green-500 rounded-full mr-2" /> Portfolio Exposure Monitoring</li>
-                                </ul>
-                            </div>
-                            <div className="bg-slate-900 rounded-xl border border-slate-800 p-8 h-80 flex items-center justify-center relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <Shield className="h-32 w-32 text-slate-700 group-hover:text-green-500 transition-colors duration-500" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="mt-24 text-center">
-                        <h2 className="text-2xl font-bold mb-6">And much more...</h2>
-                        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <div className="p-4 bg-slate-900 rounded-lg border border-slate-800">
-                                <Bell className="h-8 w-8 text-yellow-500 mb-2 mx-auto" />
-                                <h3 className="font-bold">Telegram Alerts</h3>
-                            </div>
-                            <div className="p-4 bg-slate-900 rounded-lg border border-slate-800">
-                                <BarChart2 className="h-8 w-8 text-blue-500 mb-2 mx-auto" />
-                                <h3 className="font-bold">Pattern Detection</h3>
-                            </div>
-                            <div className="p-4 bg-slate-900 rounded-lg border border-slate-800">
-                                <Globe className="h-8 w-8 text-cyan-500 mb-2 mx-auto" />
-                                <h3 className="font-bold">News Analysis</h3>
-                            </div>
-                            <div className="p-4 bg-slate-900 rounded-lg border border-slate-800">
-                                <Smartphone className="h-8 w-8 text-purple-500 mb-2 mx-auto" />
-                                <h3 className="font-bold">Mobile Friendly</h3>
-                            </div>
-                        </div>
+                        ))}
                     </div>
                 </div>
-            </main>
+            </section>
+
+            <Footer />
         </div>
     )
 }
