@@ -360,6 +360,39 @@ Format as JSON:
     }
 
     /**
+     * Run Guru-Level Analysis via Python Microservice
+     */
+    private async runGuruAnalysis(symbol: string, priceData: any[]) {
+        try {
+            const response = await fetch(`${process.env.PYTHON_PATTERN_DETECTOR_URL}/analyze/guru`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    symbol,
+                    timeframe: priceData[0].timeframe || "1h",
+                    candles: priceData.map(p => ({
+                        timestamp: p.timestamp,
+                        open: p.open,
+                        high: p.high,
+                        low: p.low,
+                        close: p.close,
+                        volume: p.volume
+                    }))
+                })
+            })
+
+            if (!response.ok) {
+                throw new Error('Failed to run guru analysis')
+            }
+
+            return await response.json()
+        } catch (error) {
+            console.warn("Guru Analysis unavailable:", error)
+            return null
+        }
+    }
+
+    /**
      * Analyze market and generate signals
      */
     async analyze(task: AgentTask): Promise<AgentResult> {
@@ -372,6 +405,28 @@ Format as JSON:
                 // Get latest price data
                 const priceData = await this.getPriceData(symbol, task.timeframe)
 
+                // 1. Run Guru Analysis (Python Orchestrator)
+                const guruResult = await this.runGuruAnalysis(symbol, priceData)
+
+                if (guruResult && guruResult.decision !== 'NEUTRAL') {
+                    // Use Guru result directly if available
+                    findings.push({
+                        symbol,
+                        signal: guruResult.decision,
+                        confidence: guruResult.confidence * 100,
+                        reasoning: `Guru Analysis (${guruResult.confidence_label}): ${guruResult.supporting_agents.length} agents supporting.`,
+                        strategies: guruResult.supporting_agents.map((a: any) => a.agent),
+                        entryPrice: guruResult.entry,
+                        stopLoss: guruResult.stop_loss,
+                        takeProfit1: guruResult.targets[0]?.price || 0,
+                        takeProfit2: guruResult.targets[1]?.price,
+                        takeProfit3: guruResult.targets[2]?.price,
+                        indicators: guruResult.market_regime
+                    })
+                    continue // Skip legacy analysis if Guru works
+                }
+
+                // Fallback to Legacy Analysis if Guru fails or is neutral
                 // Get technical indicators
                 const indicators = await this.calculateIndicators(priceData)
 
