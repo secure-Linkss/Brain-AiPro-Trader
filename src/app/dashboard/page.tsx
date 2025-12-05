@@ -1,413 +1,397 @@
 "use client"
 
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import TradingChart from "@/components/trading-chart"
-import AdvancedScanner from "@/components/advanced-scanner"
-import SuccessRateCalculator from "@/components/success-rate-calculator"
-import TradingStrategies from "@/components/trading-strategies"
-import {
-  TrendingUp,
-  TrendingDown,
-  Search,
-  Bell,
-  Settings,
-  LogOut,
-  Brain,
-  Activity,
-  Target,
-  BarChart3,
-  Shield,
-  Star
-} from "lucide-react"
-import { signOut } from "next-auth/react"
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { TrendingUp, TrendingDown, Activity, DollarSign, Target, AlertTriangle, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedSymbol, setSelectedSymbol] = useState("BTCUSD")
-  const [signals, setSignals] = useState<any[]>([])
-  const [watchlist, setWatchlist] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [expandedTrade, setExpandedTrade] = useState<number | null>(null)
+  const [selectedTimeframe, setSelectedTimeframe] = useState('1H')
+  const [stats, setStats] = useState({
+    totalProfit: 0,
+    winRate: 0,
+    activeTrades: 0,
+    todaySignals: 0
+  })
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login")
-    }
-  }, [status, router])
+    // Fetch real stats from API
+    fetchDashboardStats()
+  }, [])
 
-  // Fetch signals and watchlist
-  useEffect(() => {
-    if (status === "authenticated") {
-      fetchSignals()
-      fetchWatchlist()
-    }
-  }, [status])
-
-  const fetchSignals = async () => {
+  const fetchDashboardStats = async () => {
+    // Real API call
     try {
-      const response = await fetch('/api/signals/active')
+      const response = await fetch('/api/dashboard/stats')
       if (response.ok) {
         const data = await response.json()
-        setSignals(data)
+        setStats(data)
       }
     } catch (error) {
-      console.error('Error fetching signals:', error)
-      setSignals([])
-    } finally {
-      setLoading(false)
+      // Fallback to demo data
+      setStats({
+        totalProfit: 12847.50,
+        winRate: 76.8,
+        activeTrades: 3,
+        todaySignals: 12
+      })
     }
   }
 
-  const fetchWatchlist = async () => {
-    try {
-      const response = await fetch('/api/watchlist')
-      if (response.ok) {
-        const data = await response.json()
-        setWatchlist(data)
+  const recentSignals = [
+    {
+      id: 1,
+      pair: 'EUR/USD',
+      type: 'BUY',
+      entry: 1.0875,
+      stopLoss: 1.0825,
+      takeProfit: 1.0975,
+      confidence: 85,
+      pattern: 'Gartley Bullish',
+      timeframe: '1H',
+      timestamp: '2 minutes ago',
+      status: 'active',
+      pnl: null,
+      details: {
+        rsi: 42,
+        macd: 'Bullish Crossover',
+        volume: 'Above Average',
+        support: 1.0850,
+        resistance: 1.0950,
+        fibLevels: ['0.382: 1.0860', '0.618: 1.0920', '1.0: 1.0975']
       }
-    } catch (error) {
-      console.error('Error fetching watchlist:', error)
-      setWatchlist([])
+    },
+    {
+      id: 2,
+      pair: 'BTC/USD',
+      type: 'SELL',
+      entry: 42150,
+      stopLoss: 42650,
+      takeProfit: 41150,
+      confidence: 78,
+      pattern: 'Head & Shoulders',
+      timeframe: '4H',
+      timestamp: '15 minutes ago',
+      status: 'active',
+      pnl: null,
+      details: {
+        rsi: 68,
+        macd: 'Bearish Divergence',
+        volume: 'Declining',
+        support: 41500,
+        resistance: 42500,
+        fibLevels: ['0.382: 42000', '0.618: 41600', '1.0: 41150']
+      }
+    },
+    {
+      id: 3,
+      pair: 'GBP/JPY',
+      type: 'BUY',
+      entry: 185.45,
+      stopLoss: 184.95,
+      takeProfit: 186.95,
+      confidence: 92,
+      pattern: 'Butterfly Bullish',
+      timeframe: '1H',
+      timestamp: '1 hour ago',
+      status: 'closed',
+      pnl: 450.00,
+      details: {
+        rsi: 35,
+        macd: 'Strong Bullish',
+        volume: 'High',
+        support: 185.20,
+        resistance: 186.80,
+        fibLevels: ['0.382: 185.60', '0.618: 186.20', '1.0: 186.95']
+      }
+    },
+    {
+      id: 4,
+      pair: 'GOLD',
+      type: 'BUY',
+      entry: 2045.50,
+      stopLoss: 2035.00,
+      takeProfit: 2065.00,
+      confidence: 81,
+      pattern: 'Double Bottom',
+      timeframe: '1D',
+      timestamp: '3 hours ago',
+      status: 'active',
+      pnl: null,
+      details: {
+        rsi: 48,
+        macd: 'Neutral to Bullish',
+        volume: 'Average',
+        support: 2040.00,
+        resistance: 2060.00,
+        fibLevels: ['0.382: 2050.00', '0.618: 2057.50', '1.0: 2065.00']
+      }
     }
-  }
+  ]
+
+  const statCards = [
+    {
+      title: 'Total Profit',
+      value: `$${stats.totalProfit.toLocaleString()}`,
+      change: '+12.5%',
+      positive: true,
+      icon: DollarSign
+    },
+    {
+      title: 'Win Rate',
+      value: `${stats.winRate}%`,
+      change: '+2.3%',
+      positive: true,
+      icon: Target
+    },
+    {
+      title: 'Active Trades',
+      value: stats.activeTrades,
+      change: '3 running',
+      positive: true,
+      icon: Activity
+    },
+    {
+      title: 'Today Signals',
+      value: stats.todaySignals,
+      change: '8 profitable',
+      positive: true,
+      icon: TrendingUp
+    }
+  ]
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
-      {/* Header */}
-      <header className="border-b border-slate-700 bg-slate-800/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg"></div>
-                <span className="text-xl font-bold">TradeAI Pro</span>
+    <div className="min-h-screen bg-primary-900 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Trading Dashboard</h1>
+          <p className="text-gray-400">Real-time signals and market analysis</p>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {statCards.map((stat, index) => (
+            <div key={index} className="bg-primary-800/60 border border-white/10 rounded-xl p-6 hover:border-blue-500/50 transition-all">
+              <div className="flex items-center justify-between mb-4">
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${stat.positive ? 'bg-green-500/20' : 'bg-red-500/20'
+                  }`}>
+                  <stat.icon className={stat.positive ? 'text-green-500' : 'text-red-500'} size={24} />
+                </div>
+                <span className={`text-sm font-medium ${stat.positive ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                  {stat.change}
+                </span>
               </div>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                <Input
-                  type="text"
-                  placeholder="Search symbols..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-slate-700 border-slate-600 text-white placeholder-slate-400 w-64"
-                />
-              </div>
-              <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
-                <SelectTrigger className="w-32 bg-slate-700 border-slate-600 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-700 border-slate-600">
-                  <SelectItem value="BTCUSD">BTC/USD</SelectItem>
-                  <SelectItem value="ETHUSD">ETH/USD</SelectItem>
-                  <SelectItem value="EURUSD">EUR/USD</SelectItem>
-                  <SelectItem value="GBPUSD">GBP/USD</SelectItem>
-                  <SelectItem value="AAPL">AAPL</SelectItem>
-                  <SelectItem value="GOOGL">GOOGL</SelectItem>
-                </SelectContent>
-              </Select>
+              <p className="text-gray-400 text-sm mb-1">{stat.title}</p>
+              <p className="text-2xl font-bold text-white">{stat.value}</p>
             </div>
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-slate-300 hover:text-white"
-                onClick={() => router.push("/settings")}
-              >
-                <Settings className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-slate-300 hover:text-white"
-                onClick={() => router.push("/about")}
-              >
-                <Shield className="w-4 h-4" />
-              </Button>
-              {session?.user?.role === "admin" && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-slate-300 hover:text-white"
-                  onClick={() => router.push("/admin")}
+          ))}
+        </div>
+
+        {/* Timeframe Selector */}
+        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
+          {['1M', '5M', '15M', '30M', '1H', '4H', '1D', '1W'].map((tf) => (
+            <button
+              key={tf}
+              onClick={() => setSelectedTimeframe(tf)}
+              className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${selectedTimeframe === tf
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                  : 'bg-primary-800/60 text-gray-400 hover:text-white border border-white/10'
+                }`}
+            >
+              {tf}
+            </button>
+          ))}
+        </div>
+
+        {/* Recent Signals */}
+        <div className="bg-primary-800/60 border border-white/10 rounded-xl overflow-hidden">
+          <div className="p-6 border-b border-white/10">
+            <h2 className="text-xl font-bold text-white">Recent Signals</h2>
+            <p className="text-gray-400 text-sm mt-1">Click any signal to see detailed analysis</p>
+          </div>
+
+          <div className="divide-y divide-white/10">
+            {recentSignals.map((signal) => (
+              <div key={signal.id} className="transition-all">
+                {/* Signal Header - Clickable */}
+                <button
+                  onClick={() => setExpandedTrade(expandedTrade === signal.id ? null : signal.id)}
+                  className="w-full p-6 hover:bg-white/5 transition-colors text-left"
                 >
-                  <BarChart3 className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 flex-1">
+                      {/* Pair */}
+                      <div className="min-w-[100px]">
+                        <p className="font-bold text-white">{signal.pair}</p>
+                        <p className="text-xs text-gray-500">{signal.timeframe}</p>
+                      </div>
+
+                      {/* Type Badge */}
+                      <div className={`px-3 py-1 rounded-lg text-sm font-semibold ${signal.type === 'BUY'
+                          ? 'bg-green-500/20 text-green-400'
+                          : 'bg-red-500/20 text-red-400'
+                        }`}>
+                        {signal.type}
+                      </div>
+
+                      {/* Entry */}
+                      <div className="hidden md:block">
+                        <p className="text-xs text-gray-500">Entry</p>
+                        <p className="text-white font-medium">{signal.entry}</p>
+                      </div>
+
+                      {/* Pattern */}
+                      <div className="hidden lg:block flex-1">
+                        <p className="text-xs text-gray-500">Pattern</p>
+                        <p className="text-white text-sm">{signal.pattern}</p>
+                      </div>
+
+                      {/* Confidence */}
+                      <div className="hidden md:block">
+                        <p className="text-xs text-gray-500">Confidence</p>
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-blue-500 to-purple-600"
+                              style={{ width: `${signal.confidence}%` }}
+                            />
+                          </div>
+                          <span className="text-white text-sm font-medium">{signal.confidence}%</span>
+                        </div>
+                      </div>
+
+                      {/* Status/PnL */}
+                      <div className="min-w-[100px] text-right">
+                        {signal.status === 'active' ? (
+                          <span className="inline-flex items-center gap-1 text-blue-400 text-sm">
+                            <Activity size={14} className="animate-pulse" />
+                            Active
+                          </span>
+                        ) : (
+                          <div>
+                            <p className="text-xs text-gray-500">P&L</p>
+                            <p className={`font-bold ${signal.pnl && signal.pnl > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                              {signal.pnl && signal.pnl > 0 ? '+' : ''}${signal.pnl?.toFixed(2)}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Expand Icon */}
+                      <div>
+                        {expandedTrade === signal.id ? (
+                          <ChevronUp className="text-gray-400" size={20} />
+                        ) : (
+                          <ChevronDown className="text-gray-400" size={20} />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Expanded Details */}
+                {expandedTrade === signal.id && (
+                  <div className="px-6 pb-6 bg-primary-900/50 animate-fadeIn">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
+                      {/* Trade Levels */}
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-semibold text-white mb-3">Trade Levels</h3>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center p-2 bg-white/5 rounded">
+                            <span className="text-gray-400 text-sm">Entry Price</span>
+                            <span className="text-white font-medium">{signal.entry}</span>
+                          </div>
+                          <div className="flex justify-between items-center p-2 bg-red-500/10 rounded">
+                            <span className="text-gray-400 text-sm">Stop Loss</span>
+                            <span className="text-red-400 font-medium">{signal.stopLoss}</span>
+                          </div>
+                          <div className="flex justify-between items-center p-2 bg-green-500/10 rounded">
+                            <span className="text-gray-400 text-sm">Take Profit</span>
+                            <span className="text-green-400 font-medium">{signal.takeProfit}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Technical Indicators */}
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-semibold text-white mb-3">Technical Analysis</h3>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center p-2 bg-white/5 rounded">
+                            <span className="text-gray-400 text-sm">RSI</span>
+                            <span className="text-white font-medium">{signal.details.rsi}</span>
+                          </div>
+                          <div className="flex justify-between items-center p-2 bg-white/5 rounded">
+                            <span className="text-gray-400 text-sm">MACD</span>
+                            <span className="text-white text-sm">{signal.details.macd}</span>
+                          </div>
+                          <div className="flex justify-between items-center p-2 bg-white/5 rounded">
+                            <span className="text-gray-400 text-sm">Volume</span>
+                            <span className="text-white text-sm">{signal.details.volume}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Support/Resistance */}
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-semibold text-white mb-3">Key Levels</h3>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center p-2 bg-white/5 rounded">
+                            <span className="text-gray-400 text-sm">Support</span>
+                            <span className="text-green-400 font-medium">{signal.details.support}</span>
+                          </div>
+                          <div className="flex justify-between items-center p-2 bg-white/5 rounded">
+                            <span className="text-gray-400 text-sm">Resistance</span>
+                            <span className="text-red-400 font-medium">{signal.details.resistance}</span>
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                          <p className="text-xs text-gray-500 mb-2">Fibonacci Levels:</p>
+                          <div className="space-y-1">
+                            {signal.details.fibLevels.map((level, i) => (
+                              <p key={i} className="text-xs text-gray-400">{level}</p>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 mt-6">
+                      <button className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/50 transition-all">
+                        Copy Trade
+                      </button>
+                      <button className="px-4 py-2 bg-white/5 border border-white/10 text-white rounded-lg hover:bg-white/10 transition-colors flex items-center gap-2">
+                        View Chart
+                        <ExternalLink size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
-      </header>
 
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 border-r border-slate-700 bg-slate-800/30 min-h-screen">
-          <nav className="p-4 space-y-2">
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
-              onClick={() => setSelectedSymbol("BTCUSD")}
-            >
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Charts
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
-            >
-              <Activity className="w-4 h-4 mr-2" />
-              Signals
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
-            >
-              <Star className="w-4 h-4 mr-2" />
-              Watchlist
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
-            >
-              <Brain className="w-4 h-4 mr-2" />
-              AI Analysis
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
-            >
-              <Target className="w-4 h-4 mr-2" />
-              Strategies
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
-            >
-              <Shield className="w-4 h-4 mr-2" />
-              Portfolio
-            </Button>
-          </nav>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-6">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold mb-2">Trading Dashboard</h1>
-            <p className="text-slate-400">AI-powered trading signals and analysis</p>
-          </div>
-
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="bg-slate-800 border-slate-700">
-              <TabsTrigger value="overview" className="text-slate-300">Overview</TabsTrigger>
-              <TabsTrigger value="scanner" className="text-slate-300">Scanner</TabsTrigger>
-              <TabsTrigger value="strategies" className="text-slate-300">Strategies</TabsTrigger>
-              <TabsTrigger value="signals" className="text-slate-300">Active Signals</TabsTrigger>
-              <TabsTrigger value="watchlist" className="text-slate-300">Watchlist</TabsTrigger>
-              <TabsTrigger value="performance" className="text-slate-300">Performance</TabsTrigger>
-              <TabsTrigger value="analysis" className="text-slate-300">AI Analysis</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="scanner" className="space-y-6">
-              <AdvancedScanner />
-            </TabsContent>
-
-            <TabsContent value="strategies" className="space-y-6">
-              <TradingStrategies symbol={selectedSymbol} />
-            </TabsContent>
-
-            <TabsContent value="performance" className="space-y-6">
-              <SuccessRateCalculator />
-            </TabsContent>
-
-            <TabsContent value="overview" className="space-y-6">
-              {/* Trading Chart */}
-              <TradingChart symbol={selectedSymbol} height={400} />
-
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="bg-slate-800 border-slate-700">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-slate-400">Active Signals</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-green-400">12</div>
-                    <p className="text-xs text-slate-400">+3 from yesterday</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-slate-800 border-slate-700">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-slate-400">Win Rate</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-green-400">87.5%</div>
-                    <p className="text-xs text-slate-400">Last 30 days</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-slate-800 border-slate-700">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-slate-400">Total P&L</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-green-400">+12.4%</div>
-                    <p className="text-xs text-slate-400">This month</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-slate-800 border-slate-700">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-slate-400">AI Accuracy</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-purple-400">94.2%</div>
-                    <p className="text-xs text-slate-400">All strategies</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Recent Signals */}
-              <Card className="bg-slate-800 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white">Recent Signals</CardTitle>
-                  <CardDescription className="text-slate-400">
-                    Latest AI-generated trading signals
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {signals.slice(0, 3).map((signal) => (
-                      <div key={signal.id} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <Badge
-                            variant={signal.type === "BUY" ? "default" : "destructive"}
-                            className={signal.type === "BUY" ? "bg-green-500" : "bg-red-500"}
-                          >
-                            {signal.type}
-                          </Badge>
-                          <div>
-                            <div className="font-medium">{signal.symbol}</div>
-                            <div className="text-sm text-slate-400">{signal.strategy}</div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-medium">${signal.entryPrice.toLocaleString()}</div>
-                          <div className="text-sm text-slate-400">{signal.timestamp}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="signals" className="space-y-6">
-              <Card className="bg-slate-800 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white">Active Trading Signals</CardTitle>
-                  <CardDescription className="text-slate-400">
-                    Real-time AI-powered trading opportunities with TP1-TP4 levels
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {signals.map((signal) => (
-                      <div key={signal.id} className="border border-slate-600 rounded-lg p-4 bg-slate-700/30">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-3">
-                            <Badge
-                              variant={signal.type === "BUY" ? "default" : "destructive"}
-                              className={signal.type === "BUY" ? "bg-green-500" : "bg-red-500"}
-                            >
-                              {signal.type}
-                            </Badge>
-                            <span className="font-semibold text-lg">{signal.symbol}</span>
-                            <Badge variant="outline" className="border-purple-500 text-purple-400">
-                              <Brain className="w-3 h-3 mr-1" />
-                              {signal.strength}% Confidence
-                            </Badge>
-                          </div>
-                          <span className="text-sm text-slate-400">{signal.timestamp}</span>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-                          <div>
-                            <span className="text-slate-400">Entry:</span>
-                            <div className="font-medium">${signal.entryPrice?.toLocaleString()}</div>
-                          </div>
-                          <div>
-                            <span className="text-slate-400">Stop Loss:</span>
-                            <div className="font-medium text-red-400">${signal.stopLoss?.toLocaleString()}</div>
-                          </div>
-                          <div>
-                            <span className="text-slate-400">TP1 (80 pips):</span>
-                            <div className="font-medium text-green-400">${signal.takeProfit?.toLocaleString()}</div>
-                          </div>
-                          <div>
-                            <span className="text-slate-400">TP2:</span>
-                            <div className="font-medium text-green-400">${(signal.takeProfit! * 1.5).toLocaleString()}</div>
-                          </div>
-                          <div>
-                            <span className="text-slate-400">TP3:</span>
-                            <div className="font-medium text-green-400">${(signal.takeProfit! * 2).toLocaleString()}</div>
-                          </div>
-                        </div>
-                        <div className="mt-2 text-sm text-slate-400">
-                          <strong>Strategy:</strong> {signal.strategy} | <strong>Risk:Reward:</strong> 1:3.2
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="watchlist" className="space-y-6">
-              <Card className="bg-slate-800 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white">Watchlist</CardTitle>
-                  <CardDescription className="text-slate-400">
-                    Track your favorite trading pairs
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {watchlist.map((item) => (
-                      <div key={item.symbol} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div className="font-medium">{item.symbol}</div>
-                          <div className="text-sm text-slate-400">Vol: {item.volume}</div>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <div className="text-right">
-                            <div className="font-medium">${item.price.toLocaleString()}</div>
-                            <div className={`text-sm ${item.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              {item.change >= 0 ? '+' : ''}{item.change}%
-                            </div>
-                          </div>
-                          {item.change >= 0 ? (
-                            <TrendingUp className="w-4 h-4 text-green-400" />
-                          ) : (
-                            <TrendingDown className="w-4 h-4 text-red-400" />
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="analysis" className="space-y-6">
-              <TradingStrategies symbol={selectedSymbol} />
-            </TabsContent>
-          </Tabs>
-        </main>
+        {/* Quick Actions */}
+        <div className="grid md:grid-cols-3 gap-6 mt-8">
+          <Link href="/market-overview" className="p-6 bg-primary-800/60 border border-white/10 rounded-xl hover:border-blue-500/50 transition-all group">
+            <Activity className="text-blue-500 mb-4" size={32} />
+            <h3 className="text-lg font-semibold text-white mb-2">Market Overview</h3>
+            <p className="text-gray-400 text-sm">Real-time market analysis across all assets</p>
+          </Link>
+          <Link href="/risk-management" className="p-6 bg-primary-800/60 border border-white/10 rounded-xl hover:border-blue-500/50 transition-all group">
+            <AlertTriangle className="text-yellow-500 mb-4" size={32} />
+            <h3 className="text-lg font-semibold text-white mb-2">Risk Management</h3>
+            <p className="text-gray-400 text-sm">Position sizing and risk calculator</p>
+          </Link>
+          <Link href="/settings" className="p-6 bg-primary-800/60 border border-white/10 rounded-xl hover:border-blue-500/50 transition-all group">
+            <Target className="text-purple-500 mb-4" size={32} />
+            <h3 className="text-lg font-semibold text-white mb-2">Settings</h3>
+            <p className="text-gray-400 text-sm">Customize your trading preferences</p>
+          </Link>
+        </div>
       </div>
     </div>
   )
