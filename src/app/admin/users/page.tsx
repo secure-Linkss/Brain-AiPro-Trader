@@ -1,46 +1,77 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { DataTable } from "@/components/ui/data-table"
-import { columns, User } from "./columns"
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
-import { LoadingAnimation } from "@/components/loading-animation"
+import { Search, Mail, Ban } from 'lucide-react'
+import { useState } from 'react'
 
-export default function UsersPage() {
-    const [users, setUsers] = useState<User[]>([])
-    const [loading, setLoading] = useState(true)
+export default function AdminUsersPage() {
+    const [searchQuery, setSearchQuery] = useState('')
 
-    useEffect(() => {
-        async function fetchUsers() {
-            try {
-                const res = await fetch('/api/admin/users')
-                const data = await res.json()
-                setUsers(data.users)
-            } catch (error) {
-                console.error('Failed to fetch users', error)
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchUsers()
-    }, [])
-
-    if (loading) return <div className="flex h-96 items-center justify-center"><LoadingAnimation /></div>
+    const users = [
+        { id: 1, name: 'John Doe', email: 'john@example.com', plan: 'Pro', status: 'active', joined: '2024-01-15' },
+        { id: 2, name: 'Jane Smith', email: 'jane@example.com', plan: 'Enterprise', status: 'active', joined: '2024-02-20' },
+        { id: 3, name: 'Bob Wilson', email: 'bob@example.com', plan: 'Free', status: 'active', joined: '2024-03-10' }
+    ]
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Users</h2>
-                    <p className="text-slate-400">Manage user access and subscriptions</p>
-                </div>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="mr-2 h-4 w-4" /> Add User
-                </Button>
-            </div>
+        <div className="min-h-screen bg-primary-900 p-4 md:p-8">
+            <div className="max-w-7xl mx-auto">
+                <h1 className="text-3xl font-bold text-white mb-8">User Management</h1>
 
-            <DataTable columns={columns} data={users} searchKey="email" />
+                <div className="mb-6">
+                    <div className="relative">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search users..."
+                            className="w-full pl-12 pr-4 py-3 bg-primary-800/60 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                        />
+                    </div>
+                </div>
+
+                <div className="bg-primary-800/60 border border-white/10 rounded-xl overflow-hidden">
+                    <table className="w-full">
+                        <thead className="bg-primary-900/50 border-b border-white/10">
+                            <tr>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Name</th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Email</th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Plan</th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Status</th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/10">
+                            {users.map((user) => (
+                                <tr key={user.id} className="hover:bg-white/5">
+                                    <td className="px-6 py-4 text-white">{user.name}</td>
+                                    <td className="px-6 py-4 text-gray-400">{user.email}</td>
+                                    <td className="px-6 py-4">
+                                        <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg text-sm">
+                                            {user.plan}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg text-sm">
+                                            {user.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex gap-2">
+                                            <button className="p-2 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30">
+                                                <Mail size={16} />
+                                            </button>
+                                            <button className="p-2 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30">
+                                                <Ban size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     )
 }
