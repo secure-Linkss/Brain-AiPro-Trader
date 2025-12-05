@@ -10,6 +10,8 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 import uvicorn
 import logging
+import pandas as pd
+from orchestrator import orchestrator
 
 from detectors.harmonics import HarmonicDetector
 from detectors.chart_patterns import ChartPatternDetector
@@ -259,6 +261,63 @@ async def calculate_indicators(request: DetectionRequest):
         
     except Exception as e:
         logger.error(f"Error calculating indicators: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+class GuruAnalysisResponse(BaseModel):
+    """Response from Guru-Level Analysis"""
+    symbol: str
+    timeframe: str
+    decision: str
+    confidence: float
+    confidence_label: str
+    entry: float
+    stop_loss: float
+    targets: List[Dict[str, Any]]
+    supporting_agents: List[Dict[str, Any]]
+    opposing_agents: List[Dict[str, Any]]
+    market_regime: Dict[str, Any]
+    veto_status: bool
+    veto_reasons: List[str]
+    timestamp: float
+
+@app.post("/analyze/guru", response_model=GuruAnalysisResponse)
+async def analyze_guru(request: DetectionRequest):
+    """
+    Run the full Guru-Level Multi-Agent Orchestrator
+    """
+    try:
+        logger.info(f"Running Guru Analysis for {request.symbol} on {request.timeframe}")
+        
+        # Convert to DataFrame
+        df = pd.DataFrame([c.dict() for c in request.candles])
+        # Ensure timestamp is datetime
+        if not pd.api.types.is_datetime64_any_dtype(df['timestamp']):
+            df['timestamp'] = pd.to_datetime(df['timestamp'])
+        df.set_index('timestamp', inplace=True)
+        
+        # Run Orchestrator
+        # Note: HTF data would be passed here if available in request
+        result = orchestrator.process_market_data(df, request.symbol, request.timeframe)
+        
+        return GuruAnalysisResponse(
+            symbol=result.symbol,
+            timeframe=result.timeframe,
+            decision=result.decision,
+            confidence=result.final_confidence,
+            confidence_label=result.confidence_label,
+            entry=result.entry or 0.0,
+            stop_loss=result.stop_loss or 0.0,
+            targets=result.targets,
+            supporting_agents=result.supporting_agents,
+            opposing_agents=result.opposing_agents,
+            market_regime=result.market_regime,
+            veto_status=result.veto_status,
+            veto_reasons=result.veto_reasons,
+            timestamp=result.timestamp
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in Guru Analysis: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
