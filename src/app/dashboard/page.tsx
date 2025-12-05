@@ -7,6 +7,8 @@ import { TrendingUp, TrendingDown, Activity, DollarSign, Target, AlertTriangle, 
 export default function DashboardPage() {
   const [expandedTrade, setExpandedTrade] = useState<number | null>(null)
   const [selectedTimeframe, setSelectedTimeframe] = useState('1H')
+  const [selectedMarket, setSelectedMarket] = useState('all')
+  const [selectedPair, setSelectedPair] = useState('all')
   const [stats, setStats] = useState({
     totalProfit: 0,
     winRate: 0,
@@ -196,8 +198,8 @@ export default function DashboardPage() {
               key={tf}
               onClick={() => setSelectedTimeframe(tf)}
               className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${selectedTimeframe === tf
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                  : 'bg-primary-800/60 text-gray-400 hover:text-white border border-white/10'
+                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                : 'bg-primary-800/60 text-gray-400 hover:text-white border border-white/10'
                 }`}
             >
               {tf}
@@ -230,8 +232,8 @@ export default function DashboardPage() {
 
                       {/* Type Badge */}
                       <div className={`px-3 py-1 rounded-lg text-sm font-semibold ${signal.type === 'BUY'
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-red-500/20 text-red-400'
+                        ? 'bg-green-500/20 text-green-400'
+                        : 'bg-red-500/20 text-red-400'
                         }`}>
                         {signal.type}
                       </div>
