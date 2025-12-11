@@ -1,0 +1,29 @@
+{
+    "type": "web_service",
+    "name": "ai-trading-frontend",
+    "ownerId": "tea-d4s01p0gjchc7383iep0",
+    "repo": "https://github.com/YOUR_USERNAME/ai-trading-platform",
+    "autoDeploy": "yes",
+    "branch": "main",
+    "buildCommand": "npm install && npm run build",
+    "startCommand": "npm start",
+    "envVars": [
+        {
+            "key": "DATABASE_URL",
+            "value": "postgresql://neondb_owner:npg_0y9XMKzHCBsN@ep-blue-resonance-add39g5q-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
+        },
+        {
+            "key": "NODE_ENV",
+            "value": "production"
+        },
+        {
+            "key": "NEXTAUTH_SECRET",
+            "value": "guru-trading-platform-secret-2025"
+        }
+    ],
+    "serviceDetails": {
+        "env": "node",
+        "plan": "starter",
+        "region": "oregon"
+    }
+}

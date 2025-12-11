@@ -76,7 +76,7 @@ export default function PricingPage() {
     ]
 
     return (
-        <div className="min-h-screen bg-primary-900">
+        <div className="min-h-screen bg-slate-950">
             <Navigation />
 
             {/* Hero Section */}
@@ -99,8 +99,8 @@ export default function PricingPage() {
                             <div
                                 key={index}
                                 className={`relative p-8 rounded-2xl border transition-all hover:-translate-y-2 ${plan.popular
-                                        ? 'bg-gradient-to-b from-blue-600/20 to-purple-600/20 border-blue-500'
-                                        : 'bg-primary-800/60 border-white/10 hover:border-white/20'
+                                    ? 'bg-gradient-to-b from-blue-600/20 to-purple-600/20 border-blue-500'
+                                    : 'bg-primary-800/60 border-white/10 hover:border-white/20'
                                     }`}
                             >
                                 {plan.popular && (
@@ -121,8 +121,8 @@ export default function PricingPage() {
                                 <Link
                                     href={plan.href}
                                     className={`block w-full py-3 text-center font-semibold rounded-lg mb-8 transition-all ${plan.popular
-                                            ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:shadow-lg hover:shadow-blue-500/50'
-                                            : 'bg-white/5 border border-white/20 text-white hover:bg-white/10'
+                                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:shadow-lg hover:shadow-blue-500/50'
+                                        : 'bg-white/5 border border-white/20 text-white hover:bg-white/10'
                                         }`}
                                 >
                                     {plan.cta}

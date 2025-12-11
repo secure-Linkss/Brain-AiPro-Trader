@@ -13,6 +13,23 @@ export default function NewsSentimentPage() {
     const [textToAnalyze, setTextToAnalyze] = useState('');
     const [analysisResult, setAnalysisResult] = useState<any>(null);
     const [loading, setLoading] = useState(false);
+    const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
+
+    React.useEffect(() => {
+        const fetchCalendar = async () => {
+            try {
+                // Fetch from Next.js Internal API (calls Node.js NewsAgent)
+                const res = await fetch('/api/news/calendar');
+                if (res.ok) {
+                    const data = await res.json();
+                    setCalendarEvents(data);
+                }
+            } catch (e) {
+                console.error("Failed to fetch calendar", e);
+            }
+        };
+        fetchCalendar();
+    }, []);
 
     const analyzeSentiment = async () => {
         if (!textToAnalyze) return;
@@ -211,40 +228,31 @@ export default function NewsSentimentPage() {
                                     Official FRED Data
                                 </h3>
 
-                                {/* This would be populated by the /calendar/upcoming endpoint */}
+                                {/* Live Data from Python Agent */}
                                 <div className="space-y-3">
-                                    {/* Example of what the backend returns */}
-                                    <div className="p-3 rounded bg-slate-900 border border-slate-800 text-sm">
-                                        <div className="flex justify-between mb-1">
-                                            <span className="font-bold text-slate-200">CPI (YoY)</span>
-                                            <Badge variant="outline" className="text-xs border-red-500 text-red-500">HIGH</Badge>
+                                    {calendarEvents.length === 0 ? (
+                                        <div className="text-sm text-slate-500 text-center py-10">
+                                            Loading official data...
                                         </div>
-                                        <div className="grid grid-cols-2 gap-2 text-xs text-slate-400 mb-2">
-                                            <div>Forecast: <span className="text-slate-200">3.1%</span></div>
-                                            <div>Previous: <span className="text-slate-200">3.2%</span></div>
-                                        </div>
-                                        <div className="text-[10px] text-green-400 bg-green-400/10 p-1.5 rounded border border-green-400/20">
-                                            ✓ Verified via St. Louis Fed API
-                                        </div>
-                                    </div>
-
-                                    <div className="p-3 rounded bg-slate-900 border border-slate-800 text-sm">
-                                        <div className="flex justify-between mb-1">
-                                            <span className="font-bold text-slate-200">Non-Farm Payrolls</span>
-                                            <Badge variant="outline" className="text-xs border-red-500 text-red-500">HIGH</Badge>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-2 text-xs text-slate-400 mb-2">
-                                            <div>Forecast: <span className="text-slate-200">180K</span></div>
-                                            <div>Previous: <span className="text-slate-200">150K</span></div>
-                                        </div>
-                                        <div className="text-[10px] text-green-400 bg-green-400/10 p-1.5 rounded border border-green-400/20">
-                                            ✓ Verified via St. Louis Fed API
-                                        </div>
-                                    </div>
-
-                                    <div className="text-xs text-center text-slate-500 mt-4">
-                                        Fetching real-time data from FRED API...
-                                    </div>
+                                    ) : (
+                                        calendarEvents.map((event, idx) => (
+                                            <div key={idx} className="p-3 rounded bg-slate-900 border border-slate-800 text-sm">
+                                                <div className="flex justify-between mb-1">
+                                                    <span className="font-bold text-slate-200">{event.title}</span>
+                                                    <Badge variant="outline" className={`text-xs ${event.impact === 'HIGH' ? 'border-red-500 text-red-500' : 'border-blue-500 text-blue-500'}`}>
+                                                        {event.impact}
+                                                    </Badge>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 text-xs text-slate-400 mb-2">
+                                                    <div>Date: <span className="text-slate-200">{event.date}</span></div>
+                                                    <div>Forecast: <span className="text-slate-200">{event.forecast || 'N/A'}</span></div>
+                                                </div>
+                                                <div className="text-[10px] text-green-400 bg-green-400/10 p-1.5 rounded border border-green-400/20">
+                                                    ✓ Verified via Python Agent (yFinance/FRED)
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
 

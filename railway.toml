@@ -1,0 +1,34 @@
+[build]
+builder = "docker"
+
+# Service Definitions
+
+[[services]]
+name = "frontend"
+path = "."
+dockerfile = "Dockerfile"
+[services.deploy]
+startCommand = "node server.js"
+healthcheckPath = "/"
+restartPolicyType = "on_failure"
+port = 3000
+
+[[services]]
+name = "pattern-detector"
+path = "python-services/pattern-detector"
+dockerfile = "Dockerfile"
+[services.deploy]
+startCommand = "uvicorn main:app --host 0.0.0.0 --port 8001"
+healthcheckPath = "/health"
+restartPolicyType = "on_failure"
+port = 8001
+
+[[services]]
+name = "backend-gateway"
+path = "python-services"
+dockerfile = "Dockerfile"
+[services.deploy]
+startCommand = "uvicorn backtesting-engine.main:app --host 0.0.0.0 --port 8003"
+healthcheckPath = "/"
+restartPolicyType = "on_failure"
+port = 8003

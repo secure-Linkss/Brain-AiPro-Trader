@@ -1,6 +1,6 @@
 "use client"
 
-import Navigation from '@/components/layout/Footer'
+import Navigation from '@/components/layout/Navigation'
 import Footer from '@/components/layout/Footer'
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
@@ -80,7 +80,7 @@ export default function FAQPage() {
     ]
 
     return (
-        <div className="min-h-screen bg-primary-900">
+        <div className="min-h-screen bg-slate-950">
             <Navigation />
 
             <section className="pt-32 pb-20 px-4">
@@ -104,7 +104,7 @@ export default function FAQPage() {
                                         return (
                                             <div
                                                 key={qIndex}
-                                                className="bg-primary-800/60 border border-white/10 rounded-xl overflow-hidden"
+                                                className="bg-slate-900/60 border border-white/10 rounded-xl overflow-hidden"
                                             >
                                                 <button
                                                     onClick={() => setOpenIndex(isOpen ? null : globalIndex)}

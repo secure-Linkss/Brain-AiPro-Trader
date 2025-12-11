@@ -15,23 +15,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TradeAI Pro - Advanced Trading Analyst Platform",
+  title: "Brain AiPro Trader - Advanced Trading Analyst Platform",
   description: "AI-powered trading analysis platform with real-time signals, advanced charting, and multiple trading strategies including price action, harmonics, and Elliott wave analysis.",
   keywords: ["Trading", "AI", "Technical Analysis", "Trading Signals", "Charts", "Price Action", "Harmonics", "Elliott Wave"],
-  authors: [{ name: "TradeAI Pro Team" }],
+  authors: [{ name: "Brain AiPro Trader Team" }],
   icons: {
-    icon: "/logo.svg",
+    icon: "/logo.png",
+    apple: "/logo.png",
   },
   openGraph: {
-    title: "TradeAI Pro - Advanced Trading Analyst Platform",
+    title: "Brain AiPro Trader - Advanced Trading Analyst Platform",
     description: "AI-powered trading analysis with real-time signals and advanced charting",
-    url: "https://tradeai.pro",
-    siteName: "TradeAI Pro",
+    url: "https://brainaiprotrader.com",
+    siteName: "Brain AiPro Trader",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "TradeAI Pro - Advanced Trading Analyst Platform",
+    title: "Brain AiPro Trader - Advanced Trading Analyst Platform",
     description: "AI-powered trading analysis with real-time signals and advanced charting",
   },
 };

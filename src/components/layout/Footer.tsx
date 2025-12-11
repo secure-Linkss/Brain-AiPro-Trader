@@ -1,6 +1,5 @@
-"use client"
-
 import Link from 'next/link'
+import Logo from '@/components/Logo'
 import { Github, Twitter, Linkedin, Mail, Youtube } from 'lucide-react'
 
 export default function Footer() {
@@ -12,7 +11,6 @@ export default function Footer() {
             links: [
                 { label: 'Features', href: '/features' },
                 { label: 'Pricing', href: '/pricing' },
-                { label: 'Dashboard', href: '/dashboard' },
                 { label: 'API Documentation', href: '/docs' },
             ],
         },
@@ -39,7 +37,6 @@ export default function Footer() {
             links: [
                 { label: 'Help Center', href: '/help' },
                 { label: 'Community', href: '/community' },
-                { label: 'Tutorials', href: '/tutorials' },
                 { label: 'Status', href: '/status' },
             ],
         },
@@ -53,25 +50,14 @@ export default function Footer() {
     ]
 
     return (
-        <footer className="bg-primary-900 border-t border-white/10">
+        <footer className="bg-slate-950 border-t border-white/10">
             <div className="container mx-auto px-4 py-12">
                 {/* Main Footer Content */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 mb-8">
                     {/* Brand Section */}
                     <div className="lg:col-span-2">
-                        <Link href="/" className="flex items-center space-x-3 mb-4 group">
-                            <div className="relative w-10 h-10">
-                                <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg blur-sm group-hover:blur-md transition-all" />
-                                <div className="relative w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                    <span className="text-white font-bold text-xl">🧠</span>
-                                </div>
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="text-white font-bold text-lg leading-none">
-                                    Brain AiPro Trader
-                                </span>
-                                <span className="text-blue-400 text-xs">AI Trading Intelligence</span>
-                            </div>
+                        <Link href="/" className="flex items-center mb-4">
+                            <Logo iconSize={40} fontSize="1.125rem" className="text-white" />
                         </Link>
                         <p className="text-gray-400 text-sm mb-6 max-w-xs">
                             Advanced AI-powered trading analysis platform. Make smarter trading decisions with institutional-grade intelligence.
@@ -157,7 +143,7 @@ export default function Footer() {
             </div>
 
             {/* Disclaimer */}
-            <div className="bg-primary-800/50 border-t border-white/5">
+            <div className="bg-slate-900/50 border-t border-white/5">
                 <div className="container mx-auto px-4 py-4">
                     <p className="text-gray-500 text-xs text-center">
                         <strong>Risk Disclaimer:</strong> Trading involves substantial risk and is not suitable for every investor. Past performance does not guarantee future results. This platform provides analysis tools only and does not constitute financial advice.

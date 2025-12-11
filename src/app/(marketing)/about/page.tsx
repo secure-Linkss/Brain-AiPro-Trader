@@ -3,7 +3,7 @@ import Footer from '@/components/layout/Footer'
 
 export default function AboutPage() {
     return (
-        <div className="min-h-screen bg-primary-900">
+        <div className="min-h-screen bg-slate-950">
             <Navigation />
 
             <section className="pt-32 pb-20 px-4">

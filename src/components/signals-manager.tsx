@@ -28,7 +28,7 @@ interface Signal {
   entryPrice?: number
   stopLoss?: number
   takeProfit?: number
-  status: "ACTIVE" | "CLOSED" | "CANCELLED"
+  status: "PENDING" | "ACTIVE" | "CLOSED" | "CANCELLED"
   reason: string
   createdAt: string
   tradingPair: {
@@ -168,6 +168,7 @@ export default function SignalsManager({ symbol }: SignalsManagerProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ACTIVE": return "bg-blue-500"
+      case "PENDING": return "bg-yellow-500 animate-pulse" // Flashing yellow
       case "CLOSED": return "bg-green-500"
       case "CANCELLED": return "bg-gray-500"
       default: return "bg-gray-500"
@@ -259,7 +260,8 @@ export default function SignalsManager({ symbol }: SignalsManagerProps) {
               </SelectTrigger>
               <SelectContent className="bg-slate-700 border-slate-600">
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="ACTIVE">Active (Confirmed)</SelectItem>
+                <SelectItem value="PENDING">Pending (Waiting)</SelectItem>
                 <SelectItem value="CLOSED">Closed</SelectItem>
                 <SelectItem value="CANCELLED">Cancelled</SelectItem>
               </SelectContent>
@@ -324,6 +326,14 @@ export default function SignalsManager({ symbol }: SignalsManagerProps) {
                           >
                             <X className="w-3 h-3" />
                           </Button>
+                        </div>
+                      )}
+                      {signal.status === "PENDING" && (
+                        <div className="flex space-x-1">
+                          <span className="text-xs text-yellow-400 animate-pulse flex items-center">
+                            <Clock className="w-3 h-3 mr-1" />
+                            Waiting for Entry...
+                          </span>
                         </div>
                       )}
                     </div>

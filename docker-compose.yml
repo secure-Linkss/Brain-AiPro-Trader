@@ -15,7 +15,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U trading_user"]
+      test: [ "CMD-SHELL", "pg_isready -U trading_user" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -32,7 +32,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -69,26 +69,26 @@ services:
       - trading-network
     restart: unless-stopped
 
-  # Socket.IO Server
-  socketio-server:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.nextjs
-    container_name: ai-trading-socketio
-    command: node dist/services/socket-server.js
-    environment:
-      - NODE_ENV=production
-      - REDIS_URL=redis://redis:6379
-      - SOCKET_IO_PORT=3001
-      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/ai_trading_platform
-    ports:
-      - "3001:3001"
-    depends_on:
-      - redis
-      - postgres
-    networks:
-      - trading-network
-    restart: unless-stopped
+  # Socket.IO Server (Integrated in Next.js for now)
+  # socketio-server:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile.nextjs
+  #   container_name: ai-trading-socketio
+  #   command: node dist/services/socket-server.js
+  #   environment:
+  #     - NODE_ENV=production
+  #     - REDIS_URL=redis://redis:6379
+  #     - SOCKET_IO_PORT=3001
+  #     - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/ai_trading_platform
+  #   ports:
+  #     - "3001:3001"
+  #   depends_on:
+  #     - redis
+  #     - postgres
+  #   networks:
+  #     - trading-network
+  #   restart: unless-stopped
 
   # Python Pattern Detector Service
   pattern-detector:
@@ -108,32 +108,12 @@ services:
       - trading-network
     restart: unless-stopped
 
-  # Python News Agent Service
-  news-agent:
-    build:
-      context: ./python-services/news-agent
-      dockerfile: Dockerfile
-    container_name: ai-trading-news-agent
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/ai_trading_platform
-      - NEWS_API_KEY=${NEWS_API_KEY}
-      - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY}
-    ports:
-      - "8002:8002"
-    depends_on:
-      - redis
-      - postgres
-    networks:
-      - trading-network
-    restart: unless-stopped
-
-  # Python Backtest Engine Service
+  # Python Backtest Engine (Central Gateway)
   backtest-engine:
     build:
-      context: ./python-services/backtest-engine
+      context: ./python-services
       dockerfile: Dockerfile
-    container_name: ai-trading-backtest-engine
+    container_name: ai-trading-gateway
     environment:
       - REDIS_URL=redis://redis:6379
       - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/ai_trading_platform

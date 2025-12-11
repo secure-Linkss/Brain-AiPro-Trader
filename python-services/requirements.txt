@@ -1,26 +1,61 @@
 # Core Dependencies
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
+# Core Data & Analysis
+pandas==2.1.4
+numpy==1.26.2
+yfinance==0.2.33
+pandas-ta==0.3.14b0
+scipy==1.11.4
+scikit-learn==1.3.2
+
+# Technical Analysis
+ta-lib==0.4.28
+
+# API & Web
+fastapi==0.108.0
+uvicorn[standard]==0.25.0
+python-multipart==0.0.6
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Database
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.25
+prisma==0.11.0
+
+# Data Storage
+pyarrow==14.0.2
+fastparquet==2023.10.1
+
+# HTTP & Networking
+requests==2.31.0
+aiohttp==3.9.1
+httpx==0.26.0
+
+# WebSocket
+websockets==12.0
+python-socketio==5.10.0
+
+# Utilities
 python-dotenv==1.0.0
+python-dateutil==2.8.2
+pytz==2023.3.post1
 
-# Data Processing
-pandas==2.2.0
-numpy==1.26.3
-scipy==1.12.0
-yfinance==0.2.36
-
-# Security & Authentication
-pyotp==2.9.0
-qrcode[pil]==7.4.2
-Pillow==10.2.0
+# Logging & Monitoring
+loguru==0.7.2
 
 # AI Sentiment Analysis
 vaderSentiment==3.3.2
 textblob==0.18.0
-aiohttp==3.9.3
 
-# Database
-prisma==0.11.0
+# Security & Authentication (for admin/user management)
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+bcrypt==4.1.2
 
-# Utilities
-python-dateutil==2.8.2
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+# Optional: Machine Learning (if needed)
+# tensorflow==2.15.0
+# torch==2.1.2

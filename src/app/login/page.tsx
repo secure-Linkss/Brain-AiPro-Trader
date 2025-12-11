@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import Logo from '@/components/Logo'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -59,7 +60,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-primary-900 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-12">
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500 rounded-full blur-3xl opacity-10" />
@@ -68,21 +69,12 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md relative z-10">
         {/* Logo */}
-        <Link href="/" className="flex items-center justify-center gap-3 mb-8 group">
-          <div className="relative w-12 h-12">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg blur-sm group-hover:blur-md transition-all" />
-            <div className="relative w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">🧠</span>
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-white font-bold text-xl leading-none">Brain AiPro Trader</span>
-            <span className="text-blue-400 text-xs">AI Trading Intelligence</span>
-          </div>
+        <Link href="/" className="flex justify-center mb-8">
+          <Logo iconSize={48} fontSize="1.5rem" className="text-white" />
         </Link>
 
         {/* Login Card */}
-        <div className="bg-primary-800/60 border border-white/10 rounded-2xl p-8 backdrop-blur-sm">
+        <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-8 backdrop-blur-sm">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
             <p className="text-gray-400">Sign in to your account to continue</p>
@@ -107,7 +99,7 @@ export default function LoginPage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className={`w-full pl-12 pr-4 py-3 bg-primary-900/50 border rounded-lg text-white placeholder-gray-500 focus:outline-none transition-colors ${errors.email ? 'border-red-500' : 'border-white/10 focus:border-blue-500'
+                  className={`w-full pl-12 pr-4 py-3 bg-slate-900/50 border rounded-lg text-white placeholder-gray-500 focus:outline-none transition-colors ${errors.email ? 'border-red-500' : 'border-white/10 focus:border-blue-500'
                     }`}
                   placeholder="you@example.com"
                 />
@@ -126,7 +118,7 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className={`w-full pl-12 pr-12 py-3 bg-primary-900/50 border rounded-lg text-white placeholder-gray-500 focus:outline-none transition-colors ${errors.password ? 'border-red-500' : 'border-white/10 focus:border-blue-500'
+                  className={`w-full pl-12 pr-12 py-3 bg-slate-900/50 border rounded-lg text-white placeholder-gray-500 focus:outline-none transition-colors ${errors.password ? 'border-red-500' : 'border-white/10 focus:border-blue-500'
                     }`}
                   placeholder="••••••••"
                 />

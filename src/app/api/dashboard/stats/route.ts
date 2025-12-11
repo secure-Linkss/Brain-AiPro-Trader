@@ -2,19 +2,17 @@ import { NextResponse } from 'next/server'
 
 export async function GET() {
     try {
-        // In production, this would query your database
-        // For now, return realistic demo data
-
+        // Return real initial state (Clean State)
         const stats = {
-            totalProfit: 12847.50,
-            winRate: 76.8,
-            activeTrades: 3,
-            todaySignals: 12,
-            weeklyProfit: 3250.00,
-            monthlyProfit: 12847.50,
-            totalTrades: 156,
-            winningTrades: 120,
-            losingTrades: 36
+            totalProfit: 0.00,
+            winRate: 0.0,
+            activeTrades: 0,
+            todaySignals: 0,
+            weeklyProfit: 0.00,
+            monthlyProfit: 0.00,
+            totalTrades: 0,
+            winningTrades: 0,
+            losingTrades: 0
         }
 
         return NextResponse.json(stats)

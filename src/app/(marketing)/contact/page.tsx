@@ -49,7 +49,7 @@ export default function ContactPage() {
     ]
 
     return (
-        <div className="min-h-screen bg-primary-900">
+        <div className="min-h-screen bg-slate-950">
             <Navigation />
 
             {/* Hero Section */}

@@ -1,115 +1,86 @@
-import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcryptjs'
+import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 async function main() {
-    console.log('🌱 Starting database seed...')
+  console.log('🌱 Starting database seed...');
 
-    // Create default admin user
-    const hashedPassword = await bcrypt.hash('Mayflower1!!', 10)
+  // Hash passwords
+  const adminPasswordHash = await bcrypt.hash('Mayflower1!!', 10);
+  const userPasswordHash = await bcrypt.hash('Mayflower1!', 10);
 
-    const admin = await prisma.user.upsert({
-        where: { email: 'admin@brainai.com' },
-        update: {},
-        create: {
-            email: 'admin@brainai.com',
-            name: 'Brain Admin',
-            password: hashedPassword,
-            role: 'admin'
-        }
-    })
+  // Create admin user
+  const admin = await prisma.user.upsert({
+    where: { email: 'brain@admin.com' },
+    update: {
+      password: adminPasswordHash,
+      role: 'admin',
+      name: 'Brain Admin',
+    },
+    create: {
+      email: 'brain@admin.com',
+      name: 'Brain Admin',
+      password: adminPasswordHash,
+      role: 'admin',
+    },
+  });
 
-    console.log('✅ Created admin user:', admin.email)
+  console.log('✅ Created admin user:', admin.email);
 
-    // Create subscription plans
-    const plans = [
-        {
-            name: 'Starter',
-            stripePriceId: 'price_starter_monthly',
-            amount: 29,
-            interval: 'month',
-            features: [
-                '10 Signals per day',
-                'Basic Risk Calculator',
-                'Email Notifications',
-                'Forex Signals Only',
-                'Community Support'
-            ]
-        },
-        {
-            name: 'Pro Trader',
-            stripePriceId: 'price_pro_monthly',
-            amount: 99,
-            interval: 'month',
-            features: [
-                'Unlimited Signals',
-                'All Markets',
-                'Advanced Risk Management',
-                'Telegram Alerts',
-                'AI Opportunity Finder',
-                '19 Advanced Strategies',
-                'Pattern Detection',
-                'Success Rate Tracking',
-                'Priority Support'
-            ]
-        },
-        {
-            name: 'Elite',
-            stripePriceId: 'price_elite_monthly',
-            amount: 299,
-            interval: 'month',
-            features: [
-                'Everything in Pro',
-                'API Access',
-                'Custom Strategy Builder',
-                '1-on-1 Strategy Calls',
-                'Portfolio Management',
-                'Multi-Account Support',
-                'Dedicated Account Manager'
-            ]
-        }
-    ]
+  // Create test user
+  const testUser = await prisma.user.upsert({
+    where: { email: 'testaccount1@test.com' },
+    update: {
+      password: userPasswordHash,
+      role: 'user',
+      name: 'Test Account 1',
+    },
+    create: {
+      email: 'testaccount1@test.com',
+      name: 'Test Account 1',
+      password: userPasswordHash,
+      role: 'user',
+    },
+  });
 
-    for (const plan of plans) {
-        await prisma.subscriptionPlan.upsert({
-            where: { stripePriceId: plan.stripePriceId },
-            update: {},
-            create: plan
-        })
-        console.log(`✅ Created plan: ${plan.name}`)
-    }
+  console.log('✅ Created test user:', testUser.email);
 
-    // Create sample trading pairs
-    const pairs = [
-        { symbol: 'EURUSD', market: 'forex', name: 'Euro / US Dollar' },
-        { symbol: 'GBPUSD', market: 'forex', name: 'British Pound / US Dollar' },
-        { symbol: 'USDJPY', market: 'forex', name: 'US Dollar / Japanese Yen' },
-        { symbol: 'BTCUSDT', market: 'crypto', name: 'Bitcoin / Tether' },
-        { symbol: 'ETHUSDT', market: 'crypto', name: 'Ethereum / Tether' },
-        { symbol: 'AAPL', market: 'stocks', name: 'Apple Inc.' },
-        { symbol: 'TSLA', market: 'stocks', name: 'Tesla Inc.' },
-        { symbol: 'XAUUSD', market: 'commodities', name: 'Gold / US Dollar' }
-    ]
+  // Create some default trading pairs
+  const tradingPairs = [
+    { symbol: 'BTCUSD', name: 'Bitcoin', market: 'crypto' },
+    { symbol: 'ETHUSD', name: 'Ethereum', market: 'crypto' },
+    { symbol: 'AAPL', name: 'Apple Inc.', market: 'stock' },
+    { symbol: 'TSLA', name: 'Tesla Inc.', market: 'stock' },
+    { symbol: 'EURUSD', name: 'Euro/US Dollar', market: 'forex' },
+  ];
 
-    for (const pair of pairs) {
-        await prisma.tradingPair.upsert({
-            where: { symbol: pair.symbol },
-            update: {},
-            create: pair
-        })
-    }
+  for (const pair of tradingPairs) {
+    await prisma.tradingPair.upsert({
+      where: { symbol: pair.symbol },
+      update: { ...pair, isActive: true },
+      create: pair,
+    });
+  }
 
-    console.log('✅ Created trading pairs')
-
-    console.log('🎉 Database seed completed!')
+  console.log('✅ Created default trading pairs');
+  console.log('\n📋 Default Credentials:');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('Admin:');
+  console.log('  Email: brain@admin.com');
+  console.log('  Password: Mayflower1!!');
+  console.log('\nTest User:');
+  console.log('  Email: testaccount1@test.com');
+  console.log('  Password: Mayflower1!');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 }
 
 main()
-    .catch((e) => {
-        console.error('❌ Seed failed:', e)
-        process.exit(1)
-    })
-    .finally(async () => {
-        await prisma.$disconnect()
-    })
+  .then(async () => {
+    await prisma.$disconnect();
+  })
+  .catch(async (e) => {
+    console.error('❌ Seed failed:', e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

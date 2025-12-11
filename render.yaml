@@ -1,0 +1,108 @@
+# Render Blueprint Configuration for Brain AI Pro Trader
+# Complete deployment configuration with all services
+# DEPLOY FROM: master branch
+
+services:
+  # ========================================
+  # FRONTEND SERVICE
+  # ========================================
+  - type: web
+    name: ai-trading-frontend
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    branch: master
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_TELEMETRY_DISABLED
+        value: 1
+      - key: DATABASE_URL
+        value: postgresql://neondb_owner:npg_0y9XMKzHCBsN@ep-blue-resonance-add39g5q-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+      - key: NEXTAUTH_SECRET
+        value: sk_9f2e1c7b4a0d48c3a1e2f9d7b6c4e0a9
+      - key: NEXTAUTH_URL
+        fromService:
+          type: web
+          name: ai-trading-frontend
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: PYTHON_PATTERN_DETECTOR_URL
+        fromService:
+          type: web
+          name: pattern-detector-api
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: PYTHON_NEWS_AGENT_URL
+        fromService:
+          type: web
+          name: news-agent-api
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: PYTHON_BACKTEST_ENGINE_URL
+        fromService:
+          type: web
+          name: backtest-engine-api
+          envVarKey: RENDER_EXTERNAL_URL
+    autoDeploy: true
+
+  # ========================================
+  # PATTERN DETECTOR SERVICE
+  # ========================================
+  - type: web
+    name: pattern-detector-api
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: ./python-services/pattern_detector
+    branch: master
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: PORT
+        value: 8001
+      - key: DATABASE_URL
+        value: postgresql://neondb_owner:npg_0y9XMKzHCBsN@ep-blue-resonance-add39g5q-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+    autoDeploy: true
+
+  # ========================================
+  # NEWS AGENT SERVICE
+  # ========================================
+  - type: web
+    name: news-agent-api
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: ./python-services/news-agent
+    branch: master
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: PORT
+        value: 8002
+      - key: NEWS_API_KEY
+        sync: false  # User must set this manually
+      - key: HUGGINGFACE_API_KEY
+        sync: false  # Optional, user can set manually
+    autoDeploy: true
+
+  # ========================================
+  # BACKTEST ENGINE SERVICE
+  # ========================================
+  - type: web
+    name: backtest-engine-api
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: ./python-services
+    branch: master
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: PORT
+        value: 8003
+      - key: DATABASE_URL
+        value: postgresql://neondb_owner:npg_0y9XMKzHCBsN@ep-blue-resonance-add39g5q-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+    autoDeploy: true

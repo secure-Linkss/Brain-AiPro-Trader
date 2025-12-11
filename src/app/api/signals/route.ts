@@ -90,28 +90,34 @@ export async function POST(req: Request) {
     const pythonBackendUrl = process.env.PYTHON_BACKEND_URL || "http://localhost:8003"
 
     try {
-      // Get current price first
-      const priceResponse = await fetch(`${pythonBackendUrl}/market/ohlcv/${symbol}?timeframe=1m&limit=1`)
+      // Get current price first (LIVE)
+      const priceResponse = await fetch(`${pythonBackendUrl}/market/live-price/${symbol}`)
       let currentPrice = 0
       if (priceResponse.ok) {
         const priceData = await priceResponse.json()
-        if (priceData && priceData.length > 0) {
-          currentPrice = priceData[0].close
-        }
+        currentPrice = priceData.price
       }
 
-      // Get confluence analysis
-      const analysisResponse = await fetch(`${pythonBackendUrl}/analysis/confluence`, {
+      // Call COMPREHENSIVE Signal Generator with ALL timeframes
+      const comprehensiveResponse = await fetch(`${pythonBackendUrl}/signals/comprehensive`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol, timeframes: [timeframe] })
+        body: JSON.stringify({
+          symbol,
+          timeframes: ['5m', '15m', '30m', '1hr', '4hr', '1d', '1wk'],  // ALL 7 timeframes
+          current_price: currentPrice,
+          enforce_30pip_sl: true,  // Enforce 30 pip max stop loss
+          sniper_entry: true,  // Enable sniper entry
+          min_agents: 3,  // Minimum 3 agents must agree
+          min_confidence: 70  // Minimum 70% confidence
+        })
       })
 
-      if (!analysisResponse.ok) {
-        throw new Error(`Backend analysis failed: ${analysisResponse.statusText}`)
+      if (!comprehensiveResponse.ok) {
+        throw new Error(`Comprehensive analysis failed: ${comprehensiveResponse.statusText}`)
       }
 
-      const analysisData = await analysisResponse.json()
+      const analysisData = await comprehensiveResponse.json()
 
       // Get SMC analysis for better entry/exit levels
       const smcResponse = await fetch(`${pythonBackendUrl}/analysis/smc?symbol=${symbol}&timeframe=${timeframe}`, {

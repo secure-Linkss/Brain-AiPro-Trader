@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, X, ChevronDown } from 'lucide-react'
-import Image from 'next/image'
+import Logo from '@/components/Logo'
 
 export default function Navigation() {
     const [isScrolled, setIsScrolled] = useState(false)
@@ -31,27 +31,16 @@ export default function Navigation() {
 
     return (
         <nav
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-                    ? 'bg-primary-900/95 backdrop-blur-md shadow-lg border-b border-white/10'
-                    : 'bg-transparent'
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${(isScrolled || isMobileMenuOpen)
+                ? 'bg-slate-950/95 backdrop-blur-md shadow-lg border-b border-white/10'
+                : 'bg-transparent'
                 }`}
         >
             <div className="container mx-auto px-4">
                 <div className="flex items-center justify-between h-20">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center space-x-3 group">
-                        <div className="relative w-10 h-10">
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg blur-sm group-hover:blur-md transition-all" />
-                            <div className="relative w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-xl">🧠</span>
-                            </div>
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-white font-bold text-lg leading-none">
-                                Brain AiPro Trader
-                            </span>
-                            <span className="text-blue-400 text-xs">AI Trading Intelligence</span>
-                        </div>
+                    <Link href="/" className="flex items-center">
+                        <Logo iconSize={40} fontSize="1.125rem" className="text-white" />
                     </Link>
 
                     {/* Desktop Navigation */}
@@ -61,8 +50,8 @@ export default function Navigation() {
                                 key={link.href}
                                 href={link.href}
                                 className={`text-sm font-medium transition-colors relative group ${isActive(link.href)
-                                        ? 'text-blue-400'
-                                        : 'text-gray-300 hover:text-white'
+                                    ? 'text-blue-400'
+                                    : 'text-gray-300 hover:text-white'
                                     }`}
                             >
                                 {link.label}
@@ -99,35 +88,34 @@ export default function Navigation() {
                     </button>
                 </div>
 
-                {/* Mobile Menu */}
                 {isMobileMenuOpen && (
-                    <div className="md:hidden py-4 border-t border-white/10 animate-fadeIn">
-                        <div className="flex flex-col space-y-4">
+                    <div className="md:hidden fixed inset-x-0 top-20 bottom-0 bg-slate-950 border-t border-white/10 z-40 overflow-y-auto">
+                        <div className="flex flex-col p-6 space-y-1">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.href}
                                     href={link.href}
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className={`text-sm font-medium px-4 py-2 rounded-lg transition-colors ${isActive(link.href)
-                                            ? 'text-blue-400 bg-blue-500/10'
-                                            : 'text-gray-300 hover:text-white hover:bg-white/5'
+                                    className={`text-base font-medium px-4 py-3 rounded-lg transition-colors ${isActive(link.href)
+                                        ? 'text-blue-400 bg-blue-500/10'
+                                        : 'text-gray-100 hover:text-white hover:bg-white/10'
                                         }`}
                                 >
                                     {link.label}
                                 </Link>
                             ))}
-                            <div className="flex flex-col space-y-2 px-4 pt-4 border-t border-white/10">
+                            <div className="flex flex-col space-y-3 pt-6 mt-6 border-t border-white/10">
                                 <Link
                                     href="/login"
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="text-sm font-medium text-center py-2.5 text-gray-300 hover:text-white border border-white/20 rounded-lg transition-colors"
+                                    className="text-base font-medium text-center py-3 text-gray-100 hover:text-white border border-white/20 rounded-lg transition-colors hover:bg-white/5"
                                 >
                                     Log In
                                 </Link>
                                 <Link
                                     href="/register"
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="text-sm font-semibold text-center py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg"
+                                    className="text-base font-semibold text-center py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all"
                                 >
                                     Get Started
                                 </Link>
