@@ -104,8 +104,10 @@ class ElliottWaveDetector:
             # Extract wave measurements
             waves = self._measure_waves(wave_pivots)
             
-            # Validate Elliott Wave rules
-            if self._validate_impulse_rules(waves):
+            # Validate Elliott Wave rules (Structure, Alternation, Time)
+            if (self._validate_impulse_rules(waves) and 
+                self._validate_alternation(waves) and 
+                self._validate_time_fibonacci(waves)):
                 return {
                     'type': 'impulse',
                     'direction': 'bullish' if wave_pivots[0]['type'] == 'low' else 'bearish',
@@ -207,6 +209,50 @@ class ElliottWaveDetector:
                 if waves[3]['end_price'] > waves[0]['end_price']:
                     return False
         
+        return True
+
+    # --- GURU UPGRADE: RULE OF ALTERNATION & TIME ---
+    def _validate_alternation(self, waves: List[Dict]) -> bool:
+        """
+        Rule of Alternation:
+        If Wave 2 is a sharp correction, Wave 4 tends to be sideways/complex (and vice-versa).
+        This upgrade ensures we don't label two similar corrections as 2 and 4.
+        """
+        if len(waves) < 5: return True
+        
+        # Wave 2 Metrics
+        w2_price_change = abs(waves[1]['end_price'] - waves[1]['start_price'])
+        w2_time = abs(waves[1]['end_index'] - waves[1]['start_index'])
+        w2_slope = w2_price_change / w2_time if w2_time > 0 else 0
+        
+        # Wave 4 Metrics
+        w4_price_change = abs(waves[3]['end_price'] - waves[3]['start_price'])
+        w4_time = abs(waves[3]['end_index'] - waves[3]['start_index'])
+        w4_slope = w4_price_change / w4_time if w4_time > 0 else 0
+        
+        # If slopes are too similar (within 20%), it violates alternation
+        # Alternation means one is typically steep (sharp) and one is flat (sideways)
+        if w2_slope > 0 and w4_slope > 0:
+            similarity = min(w2_slope, w4_slope) / max(w2_slope, w4_slope)
+            if similarity > 0.8: # Too similar
+                return False
+                
+        return True
+
+    def _validate_time_fibonacci(self, waves: List[Dict]) -> bool:
+        """
+        Fibonacci Time Zones:
+        Impulse waves often relate in time by Fib ratios (1.382, 1.618).
+        """
+        if len(waves) < 5: return True
+        
+        w1_time = waves[0]['end_index'] - waves[0]['start_index']
+        w3_time = waves[2]['end_index'] - waves[2]['start_index']
+        
+        # Wave 3 should rarely be shorter in time than Wave 1
+        if w3_time < w1_time * 0.618:
+            return False
+            
         return True
     
     def _validate_corrective_rules(self, waves: List[Dict]) -> bool:

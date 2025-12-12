@@ -50,11 +50,141 @@ class ComprehensiveSMCDetector:
             'choch': self.detect_change_of_character(df),
             'order_blocks': self.detect_order_blocks(df),
             'fair_value_gaps': self.detect_fair_value_gaps(df),
+            'ict_2022_model': self.detect_ict_2022_model(df),
             'liquidity_sweeps': self.detect_liquidity_sweeps(df),
+            'market_structure': self.detect_market_structure(df),
+            'bos': self.detect_break_of_structure(df),
+            'choch': self.detect_change_of_character(df),
+            'order_blocks': self.detect_order_blocks(df),
+            'fair_value_gaps': self.detect_fair_value_gaps(df),
             'inducement': self.detect_inducement(df),
             'breaker_blocks': self.detect_breaker_blocks(df),
             'imbalances': self.detect_imbalances(df)
         }
+    
+    # ============ ICT 2022 MENTORSHIP MODEL (GURU LEVEL) ============
+    
+    def detect_ict_2022_model(self, df: pd.DataFrame) -> List[SMCPattern]:
+        """
+        The Holy Grail ICT Setup (2022 Model):
+        1. Liquidity Sweep (Run on Stops)
+        2. Displacement (Strong Move in opposite direction)
+        3. Market Structure Shift (MSS) w/ Displacement
+        4. FVG creation during the MSS
+        5. Entry on the retrace to the FVG
+        """
+        patterns = []
+        
+        if len(df) < 50:
+            return patterns
+            
+        # 1. Identify Liquidity Sweep
+        sweeps = self.detect_liquidity_sweeps(df)
+        if not sweeps:
+            return patterns
+            
+        recent_sweep = sweeps[-1] # Most recent sweep
+        sweep_idx = -1 # Find index of sweep (simplification)
+        
+        # In a real engine we'd map timestamps, here we check the last 20 bars logic inside detect_liquidity_sweeps
+        # Let's verify if a meaningful structure shift happened AFTER the sweep
+        
+        current_price = df['close'].iloc[-1]
+        
+        # --- BEARISH MODEL (Sweep High -> Break Low -> Return to FVG) ---
+        if recent_sweep.direction == 'bearish':
+            # Check for MSS (Break of significant Swing Low)
+            # Find closest swing low prior to the sweep
+            lows = argrelextrema(df['low'].values, np.less, order=5)[0]
+            if len(lows) < 2: return patterns
+            
+            # The low responsible for the sweep (last low before the high)
+            mss_level = df['low'].iloc[lows[-1]] 
+            
+            # Did we break it with Displacement?
+            # Check if any candle AFTER sweep closed below mss_level with a large body
+            displacement = False
+            fvg_zone = None
+            
+            # Look at last 10 candles (assuming sweep was recently)
+            for i in range(1, 10):
+                candle = df.iloc[-i]
+                prev_candle = df.iloc[-i-1]
+                
+                # Check Displacement Break
+                if candle['close'] < mss_level and prev_candle['close'] > mss_level:
+                    # Check body size (Displacement)
+                    body = abs(candle['close'] - candle['open'])
+                    avg_body = abs(df['close'] - df['open']).rolling(20).mean().iloc[-i]
+                    if body > avg_body * 1.5:
+                        displacement = True
+                        
+                        # Search for FVG created during this leg down
+                        # Look between sweep high and current price
+                        fvgs = self.detect_fair_value_gaps(df.iloc[-20:])
+                        for fvg in fvgs:
+                            if fvg.direction == 'bearish' and fvg.zone_bottom > current_price:
+                                fvg_zone = fvg
+                                break
+                        break
+            
+            if displacement and fvg_zone:
+                patterns.append(SMCPattern(
+                    type='ICT 2022 Model (Bearish)',
+                    direction='bearish',
+                    confidence=95.0, # Highest probability setup
+                    price_level=fvg_zone.entry,
+                    zone_top=fvg_zone.zone_top,
+                    zone_bottom=fvg_zone.zone_bottom,
+                    description=f'GOD TIER: Bearish Liquidity Sweep + MSS + Displacement + Return to FVG. Entry at {fvg_zone.entry}',
+                    entry=fvg_zone.entry,
+                    stop_loss=recent_sweep.price_level, # High of the sweep
+                    targets=self._calculate_targets(fvg_zone.entry, recent_sweep.price_level, 'bearish')
+                ))
+
+        # --- BULLISH MODEL (Sweep Low -> Break High -> Return to FVG) ---
+        elif recent_sweep.direction == 'bullish':
+            # Check for MSS (Break of significant Swing High)
+            highs = argrelextrema(df['high'].values, np.greater, order=5)[0]
+            if len(highs) < 2: return patterns
+            
+            mss_level = df['high'].iloc[highs[-1]]
+            
+            displacement = False
+            fvg_zone = None
+            
+            for i in range(1, 10):
+                candle = df.iloc[-i]
+                prev_candle = df.iloc[-i-1]
+                
+                if candle['close'] > mss_level and prev_candle['close'] < mss_level:
+                    body = abs(candle['close'] - candle['open'])
+                    avg_body = abs(df['close'] - df['open']).rolling(20).mean().iloc[-i]
+                    if body > avg_body * 1.5:
+                        displacement = True
+                        
+                        fvgs = self.detect_fair_value_gaps(df.iloc[-20:])
+                        for fvg in fvgs:
+                            if fvg.direction == 'bullish' and fvg.zone_top < current_price:
+                                fvg_zone = fvg
+                                break
+                        break
+            
+            if displacement and fvg_zone:
+                patterns.append(SMCPattern(
+                    type='ICT 2022 Model (Bullish)',
+                    direction='bullish',
+                    confidence=95.0,
+                    price_level=fvg_zone.entry,
+                    zone_top=fvg_zone.zone_top,
+                    zone_bottom=fvg_zone.zone_bottom,
+                    description=f'GOD TIER: Bullish Liquidity Sweep + MSS + Displacement + Return to FVG. Entry at {fvg_zone.entry}',
+                    entry=fvg_zone.entry,
+                    stop_loss=recent_sweep.price_level, # Low of the sweep
+                    targets=self._calculate_targets(fvg_zone.entry, recent_sweep.price_level, 'bullish')
+                ))
+
+        return patterns
     
     # ============ MARKET STRUCTURE ============
     
@@ -383,62 +513,101 @@ class ComprehensiveSMCDetector:
     def detect_liquidity_sweeps(self, df: pd.DataFrame) -> List[SMCPattern]:
         """
         Liquidity Sweeps: Price briefly breaks level to grab liquidity, then reverses
-        Smart money taking out stops before moving in intended direction
+        Smart money taking out stops before moving in intended direction.
+        
+        Refined Logic:
+        1. Identifies 'Major' Liquidity (Session Highs/Lows, Daily Highs/Lows)
+        2. Identifies 'Minor' Liquidity (Fractals)
+        3. Confirms the sweep with a candle close BACK inside the range (Turtle Soup)
         """
         patterns = []
         
-        if len(df) < 20:
+        if len(df) < 50:
             return patterns
         
         recent = df.iloc[-20:]
         
-        # Find recent swing highs/lows
-        highs = recent['high'].values
-        lows = recent['low'].values
+        # Define Liquidity Pools
+        # 1. Swing Highs/Lows (Fractals)
+        highs = df['high'].values
+        lows = df['low'].values
+        swing_highs_idx = argrelextrema(highs, np.greater, order=5)[0] # Stronger pivots (order=5)
+        swing_lows_idx = argrelextrema(lows, np.less, order=5)[0]
         
-        swing_highs_idx = argrelextrema(highs, np.greater, order=3)[0]
-        swing_lows_idx = argrelextrema(lows, np.less, order=3)[0]
+        current_idx = len(df) - 1
         
-        # Check for liquidity sweep above swing high (bearish)
-        if len(swing_highs_idx) > 0 and len(df) > swing_highs_idx[-1] + 3:
-            swing_high = highs[swing_highs_idx[-1]]
-            
-            # Check if price spiked above then reversed
-            for i in range(swing_highs_idx[-1] + 1, len(recent)):
-                if recent.iloc[i]['high'] > swing_high and recent.iloc[i]['close'] < swing_high:
-                    patterns.append(SMCPattern(
-                        type='Bearish Liquidity Sweep',
-                        direction='bearish',
-                        confidence=85.0,
-                        price_level=swing_high,
-                        zone_top=recent.iloc[i]['high'],
-                        zone_bottom=swing_high,
-                        description='Bearish liquidity sweep. Smart money grabbed liquidity above high, expect downward move.',
-                        entry=recent.iloc[i]['close'],
-                        stop_loss=recent.iloc[i]['high'],
-                        targets=self._calculate_targets(recent.iloc[i]['close'], recent.iloc[i]['high'], 'bearish')
-                    ))
-                    break
-        
-        # Check for liquidity sweep below swing low (bullish)
-        if len(swing_lows_idx) > 0 and len(df) > swing_lows_idx[-1] + 3:
-            swing_low = lows[swing_lows_idx[-1]]
-            
-            for i in range(swing_lows_idx[-1] + 1, len(recent)):
-                if recent.iloc[i]['low'] < swing_low and recent.iloc[i]['close'] > swing_low:
-                    patterns.append(SMCPattern(
-                        type='Bullish Liquidity Sweep',
-                        direction='bullish',
-                        confidence=85.0,
-                        price_level=swing_low,
-                        zone_top=swing_low,
-                        zone_bottom=recent.iloc[i]['low'],
-                        description='Bullish liquidity sweep. Smart money grabbed liquidity below low, expect upward move.',
-                        entry=recent.iloc[i]['close'],
-                        stop_loss=recent.iloc[i]['low'],
-                        targets=self._calculate_targets(recent.iloc[i]['close'], recent.iloc[i]['low'], 'bullish')
-                    ))
-                    break
+        # --- BEARISH SWEEP (Buy-Side Liquidity Purge) ---
+        if len(swing_highs_idx) > 0:
+            # Look at last 3 major highs
+            for idx in swing_highs_idx[-3:]:
+                old_high = highs[idx]
+                
+                # Check if price recently took out this high
+                # But CLOSED below it (or immediately reversed next bar)
+                for i in range(len(df)-10, len(df)):
+                    candle = df.iloc[i]
+                    if candle['high'] > old_high: # We pierced the level
+                        # Validation: Did we close below? (Wick Only = Strong Sweep)
+                        is_wick_sweep = candle['close'] < old_high
+                        
+                        # Or did we close above but immediately sell off? (Fakeout)
+                        next_candle_rejection = False
+                        if i < len(df)-1:
+                            next_candle = df.iloc[i+1]
+                            if next_candle['close'] < old_high and next_candle['close'] < next_candle['open']:
+                                next_candle_rejection = True
+                        
+                        if is_wick_sweep or next_candle_rejection:
+                             # Calculate magnitude of sweep (shouldn't be too deep or it's a breakout)
+                            sweep_depth = (candle['high'] - old_high) / old_high
+                            if sweep_depth < 0.005: # 0.5% max sweep depth (otherwise it's a run)
+                                patterns.append(SMCPattern(
+                                    type='Bearish Liquidity Sweep',
+                                    direction='bearish',
+                                    confidence=88.0,
+                                    price_level=old_high,
+                                    zone_top=candle['high'],
+                                    zone_bottom=old_high,
+                                    description='Bearish Liquidity Sweep (Buy-Side Purge). Stops taken above old high.',
+                                    entry=df['close'].iloc[-1],
+                                    stop_loss=candle['high'],
+                                    targets=self._calculate_targets(df['close'].iloc[-1], candle['high'], 'bearish')
+                                ))
+                                return patterns # Return mostly recent meaningful sweep
+
+        # --- BULLISH SWEEP (Sell-Side Liquidity Purge) ---
+        if len(swing_lows_idx) > 0:
+            for idx in swing_lows_idx[-3:]:
+                old_low = lows[idx]
+                
+                for i in range(len(df)-10, len(df)):
+                    candle = df.iloc[i]
+                    if candle['low'] < old_low: # We pierced the level
+                        # Validation: Did we close above?
+                        is_wick_sweep = candle['close'] > old_low
+                        
+                        next_candle_rejection = False
+                        if i < len(df)-1:
+                            next_candle = df.iloc[i+1]
+                            if next_candle['close'] > old_low and next_candle['close'] > next_candle['open']:
+                                next_candle_rejection = True
+                        
+                        if is_wick_sweep or next_candle_rejection:
+                            sweep_depth = (old_low - candle['low']) / old_low
+                            if sweep_depth < 0.005: 
+                                patterns.append(SMCPattern(
+                                    type='Bullish Liquidity Sweep',
+                                    direction='bullish',
+                                    confidence=88.0,
+                                    price_level=old_low,
+                                    zone_top=old_low,
+                                    zone_bottom=candle['low'],
+                                    description='Bullish Liquidity Sweep (Sell-Side Purge). Stops taken below old low.',
+                                    entry=df['close'].iloc[-1],
+                                    stop_loss=candle['low'],
+                                    targets=self._calculate_targets(df['close'].iloc[-1], candle['low'], 'bullish')
+                                ))
+                                return patterns
         
         return patterns
     

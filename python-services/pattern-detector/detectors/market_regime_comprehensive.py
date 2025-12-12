@@ -580,7 +580,38 @@ class MarketRegimeDetector:
             confidence = 75.0
             description = 'ACCUMULATION PHASE: Smart money buying. Range-bound with increasing volume.'
             recommendation = 'Prepare for markup. Accumulate on dips.'
-        
+
+            # --- GURU UPGRADE: WYCKOFF SPRING DETECTION ---
+            # Check for Spring: Break below support range followed by reclaim with specific volume
+            recent_lows = df['low'].iloc[-20:].min()
+            current_low = df['low'].iloc[-1]
+            current_close = df['close'].iloc[-1]
+            
+            # If we pierced the low but closed back inside/above (Hammer/Pinbar logic)
+            # Find support level (approximate min of last 50 bars excluding last 5)
+            support_level = df['low'].iloc[-50:-5].min()
+            
+            if df['low'].iloc[-1] < support_level and df['close'].iloc[-1] > support_level:
+                # We have a potential spring (dip below support and reclaim)
+                
+                # Volume Signature Check
+                current_vol = df['volume'].iloc[-1] if 'volume' in df.columns else 0
+                avg_vol = df['volume'].iloc[-20:].mean() if 'volume' in df.columns else 0
+                
+                # Spring Type #3 (Low Volume Test) - Best for trading
+                if current_vol < avg_vol * 0.8:
+                     description = 'WYCKOFF SPRING (Type 3): Low volume test of support. Supply exhausted.'
+                     recommendation = 'STRONG ACCUMULATION SIGNAL. Enter Long with stop below low.'
+                     confidence = 92.0
+                     phase = 'spring'
+                
+                # Shakeout (High Volume Absorption)
+                elif current_vol > avg_vol * 1.5:
+                     description = 'WYCKOFF SHAKEOUT: High volume rejection of lows. Absorption occurring.'
+                     recommendation = 'Enter Long on break of high. Volatile bottom.'
+                     confidence = 88.0
+                     phase = 'shakeout'
+
         elif price_trend == 'HH_HL':
             phase = 'markup'
             regime = MarketRegime.MARKUP
@@ -594,6 +625,14 @@ class MarketRegimeDetector:
             confidence = 75.0
             description = 'DISTRIBUTION PHASE: Smart money selling. Range-bound with decreasing volume.'
             recommendation = 'Prepare for markdown. Reduce longs. Consider shorts.'
+            
+            # --- GURU UPGRADE: UPTHRUST (UTAD) ---
+            resistance_level = df['high'].iloc[-50:-5].max()
+            if df['high'].iloc[-1] > resistance_level and df['close'].iloc[-1] < resistance_level:
+                 description = 'WYCKOFF UPTHRUST (UTAD): False breakout above resistance.'
+                 recommendation = 'STRONG DISTRIBUTION SIGNAL. Enter Short with stop above high.'
+                 confidence = 92.0
+                 phase = 'upthrust'
         
         elif price_trend == 'LH_LL':
             phase = 'markdown'
@@ -614,7 +653,7 @@ class MarketRegimeDetector:
             confidence=confidence,
             strength=70.0,
             volatility_level=self._classify_volatility(df),
-            directional_bias='bullish' if phase in ['accumulation', 'markup'] else 'bearish' if phase in ['distribution', 'markdown'] else 'neutral',
+            directional_bias='bullish' if phase in ['accumulation', 'markup', 'spring', 'shakeout'] else 'bearish' if phase in ['distribution', 'markdown', 'upthrust'] else 'neutral',
             phase=phase,
             indicators={
                 'volume_trend': volume_trend,

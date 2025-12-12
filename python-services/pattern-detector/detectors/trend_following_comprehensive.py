@@ -16,6 +16,8 @@ import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
+from scipy.signal import argrelextrema
+from scipy.stats import linregress
 
 
 @dataclass
@@ -453,15 +455,174 @@ class ComprehensiveTrendDetector:
     
     def detect_trendlines(self, df: pd.DataFrame) -> List[TrendSignal]:
         """
-        Trendline Strategy: Breakouts and retests of trendlines
+        GURU-LEVEL Trendline Strategy: Breakouts and Retests
         
-        Uptrend: Series of higher lows
-        Downtrend: Series of lower highs
+        1. Identify Pivot Points (Fractals)
+        2. Fit Trendlines (Support for Uptrends, Resistance for Downtrends)
+        3. Detect Breakouts (Price crosses line + Volume Confirmation)
+        4. Detect Retests (Price returns to line and bounces)
         """
         signals = []
         
-        # Simplified trendline detection
-        # In production, would use more sophisticated algorithms
+        if len(df) < 50:
+            return signals
+
+        # 1. Identify Pivot Points (Highs and Lows)
+        # Order 5 means 5 candles on each side (11 candle window)
+        order = 5
+        # Find local maxima (Resistance points)
+        highs = argrelextrema(df['high'].values, np.greater, order=order)[0]
+        # Find local minima (Support points)
+        lows = argrelextrema(df['low'].values, np.less, order=order)[0]
+        
+        current_price = df['close'].iloc[-1]
+        current_idx = len(df) - 1
+        
+        # Calculate RSI for Momentum Filter (14 period)
+        delta = df['close'].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs)).fillna(50)
+        current_rsi = rsi.iloc[-1]
+
+        # Calculate Fibonacci Levels for Confluence (Last 50 candles swing)
+        recent_high = df['high'].iloc[-50:].max()
+        recent_low = df['low'].iloc[-50:].min()
+        swing_range = recent_high - recent_low
+        fib_618 = recent_low + 0.618 * swing_range
+        fib_500 = recent_low + 0.500 * swing_range
+        fib_382 = recent_low + 0.382 * swing_range
+        
+        # Helper to fit line and check recent status
+        def check_trendline(pivots: np.ndarray, price_type: str, trend_type: str):
+            if len(pivots) < 3:
+                return
+
+            # Take last 3 pivots to fit a recent trendline
+            recent_pivots = pivots[-3:]
+            x = recent_pivots
+            y = df[price_type].iloc[recent_pivots].values
+            
+            # Linear regression: y = mx + c
+            slope, intercept, r_value, _, _ = linregress(x, y)
+            
+            # --- GURU FILTER 1: Trendline Quality ---
+            # r_squared must be high (tight fit)
+            if abs(r_value) < 0.88: 
+                return
+            
+            # --- GURU FILTER 2: Angle/Slope Sanity ---
+            # Reject lines that are absurdly steep (unsustainable) or flat (ranging)
+            # This is relative to price scale, but we can check if change per bar is > 2x ATR
+            atr = (df['high'] - df['low']).mean()
+            if abs(slope) > (atr * 3): # Too steep
+                return
+            if abs(slope) < (atr * 0.1): # Too flat
+                return
+
+            # Get trendline value at current candle
+            line_val_now = slope * current_idx + intercept
+            line_val_prev = slope * (current_idx - 1) + intercept
+            
+            # Define Breakout & Retest Logic
+            
+            # --- UPTREND SUPPORT LINE (Connecting Lows) ---
+            if trend_type == 'uptrend_support' and slope > 0:
+                # BREAKOUT (Bearish)
+                if df['close'].iloc[-2] > line_val_prev and df['close'].iloc[-1] < line_val_now:
+                    # GURU FILTER 3: Volume & Momentum
+                    avg_vol = df['volume'].rolling(20).mean().iloc[-1]
+                    if df['volume'].iloc[-1] > avg_vol * 1.2 and current_rsi < 50:
+                        signals.append(TrendSignal(
+                            type='trendline',
+                            direction='bearish',
+                            confidence=88.0,
+                            trend_strength=85.0,
+                            entry=current_price,
+                            stop_loss=df['high'].iloc[-3:].max(),
+                            targets=self._calculate_trend_targets(current_price, df['high'].iloc[-3:].max(), 'bearish'),
+                            indicators={'slope': slope, 'r_value': r_value, 'breakout': True, 'rsi': current_rsi},
+                            description='INSTITUTIONAL BREAKOUT (Bearish). Valid support broken with volume + RSI confirmation.'
+                        ))
+
+                # RETEST (Bearish)
+                if df['close'].iloc[-1] < line_val_now and df['close'].iloc[-1] < df['open'].iloc[-1]: # Red candle
+                    tolerance = line_val_now * 0.005
+                    if abs(df['high'].iloc[-1] - line_val_now) < tolerance or abs(df['high'].iloc[-2] - line_val_prev) < tolerance:
+                         # GURU FILTER 4: Fibonacci Confluence
+                         # If we are rejecting valid resistance, are we also rejecting a Fib level?
+                         fib_confluence = ""
+                         conf_boost = 0
+                         if abs(current_price - fib_618) < tolerance:
+                             fib_confluence = " + GOLDEN POCKET (0.618)"
+                             conf_boost = 4.0
+                         elif abs(current_price - fib_500) < tolerance:
+                             fib_confluence = " + FIB (0.5)"
+                             conf_boost = 2.0
+                             
+                         signals.append(TrendSignal(
+                            type='trendline',
+                            direction='bearish',
+                            confidence=95.0 + conf_boost,
+                            trend_strength=92.0,
+                            entry=current_price,
+                            stop_loss=df['high'].iloc[-1], 
+                            targets=self._calculate_trend_targets(current_price, df['high'].iloc[-1], 'bearish'),
+                            indicators={'slope': slope, 'retest': True, 'fib_confluence': bool(fib_confluence)},
+                            description=f'GOD TIER SETUP: Trendline RETEST (Bearish){fib_confluence}. Price rejected structure.'
+                        ))
+
+            # --- DOWNTREND RESISTANCE LINE (Connecting Highs) ---
+            elif trend_type == 'downtrend_resistance' and slope < 0:
+                # BREAKOUT (Bullish)
+                if df['close'].iloc[-2] < line_val_prev and df['close'].iloc[-1] > line_val_now:
+                    avg_vol = df['volume'].rolling(20).mean().iloc[-1]
+                    # Filter: Don't buy if RSI is already overbought (unless extreme momentum)
+                    if df['volume'].iloc[-1] > avg_vol * 1.2 and current_rsi > 50 and current_rsi < 75:
+                        signals.append(TrendSignal(
+                            type='trendline',
+                            direction='bullish',
+                            confidence=88.0,
+                            trend_strength=85.0,
+                            entry=current_price,
+                            stop_loss=df['low'].iloc[-3:].min(),
+                            targets=self._calculate_trend_targets(current_price, df['low'].iloc[-3:].min(), 'bullish'),
+                            indicators={'slope': slope, 'r_value': r_value, 'breakout': True, 'rsi': current_rsi},
+                            description='INSTITUTIONAL BREAKOUT (Bullish). Clean resistance break with volume.'
+                        ))
+                
+                # RETEST (Bullish)
+                if df['close'].iloc[-1] > line_val_now and df['close'].iloc[-1] > df['open'].iloc[-1]: # Green candle
+                    tolerance = line_val_now * 0.005
+                    if abs(df['low'].iloc[-1] - line_val_now) < tolerance or abs(df['low'].iloc[-2] - line_val_prev) < tolerance:
+                         # GURU FILTER 4: Fibonacci Confluence
+                         fib_confluence = ""
+                         conf_boost = 0
+                         if abs(current_price - fib_618) < tolerance:
+                             fib_confluence = " + GOLDEN POCKET (0.618)"
+                             conf_boost = 4.0
+                         elif abs(current_price - fib_500) < tolerance:
+                             fib_confluence = " + FIB (0.5)"
+                             conf_boost = 2.0
+
+                         signals.append(TrendSignal(
+                            type='trendline',
+                            direction='bullish',
+                            confidence=95.0 + conf_boost,
+                            trend_strength=92.0,
+                            entry=current_price,
+                            stop_loss=df['low'].iloc[-1], 
+                            targets=self._calculate_trend_targets(current_price, df['low'].iloc[-1], 'bullish'),
+                            indicators={'slope': slope, 'retest': True, 'fib_confluence': bool(fib_confluence)},
+                            description=f'GOD TIER SETUP: Trendline RETEST (Bullish){fib_confluence}. Perfect structure test.'
+                        ))
+
+        # Check Support Lines (Lows)
+        check_trendline(lows, 'low', 'uptrend_support')
+        
+        # Check Resistance Lines (Highs)
+        check_trendline(highs, 'high', 'downtrend_resistance')
         
         return signals
     

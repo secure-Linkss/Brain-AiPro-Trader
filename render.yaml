@@ -52,7 +52,7 @@ services:
     name: pattern-detector-api
     env: docker
     dockerfilePath: ./Dockerfile
-    dockerContext: ./python-services/pattern_detector
+    dockerContext: ./python-services/pattern-detector
     branch: master
     plan: starter
     healthCheckPath: /health

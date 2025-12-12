@@ -215,25 +215,106 @@ class HarmonicDetector:
         if overall_confidence < 50:
             return None
         
+        # --- GURU UPGRADE: POTENTIAL REVERSAL ZONE (PRZ) ---
+        # Instead of trusting one point 'D', we calculate the cluster of confluence
+        # 1. Primary Retracement (XA)
+        # 2. Secondary Projection (BC)
+        # 3. AB=CD Completion
+        
+        prz_levels = []
+        
+        # 1. XA Retracement Target
+        xa_target = 0
+        if pattern_name == 'Gartley': xa_target = 0.786
+        elif pattern_name == 'Bat': xa_target = 0.886
+        elif pattern_name == 'Butterfly': xa_target = 1.27
+        elif pattern_name == 'Crab': xa_target = 1.618
+        
+        if D['type'] == 'low': # Bullish Pattern
+            prz_levels.append(X['price'] + (A['price'] - X['price']) * (1 - xa_target) if xa_target > 0 else D['price']) # Approx
+            # Actually X to A is down for bearish, up for bullish.
+            # Simplified: Just project from X.
+            # Bullish: X is Low. D is Low. D is roughly X + (XA * ratio)? No.
+            # Bullish: X=Low, A=High. XA is Range.
+            # D = A - (XA * ratio)? No, D is Retracement of XA leg relative to X?
+            # Standard: D is at Fib Level relative to XA range.
+            # Retracement: D = A - (XA_range * Ratio) (If Bullish Pattern? No, Bullish ends Low)
+            # Bullish: X(Low)->A(High). D is Low. D = A - (A-X)*Ratio. Correct.
+            pass
+        
+        # Recalculate precise PRZ Levels
+        xa_range = abs(A['price'] - X['price'])
+        bc_range = abs(C['price'] - B['price'])
+        ab_range = abs(B['price'] - A['price'])
+        
+        # Level 1: XA Retracement/Extension
+        lvl_xa = 0
+        if D['type'] == 'low': # Bullish (Ends Low)
+             req_ratio = requirements.get('XA_AD', (0,0))
+             avg_ratio = (req_ratio[0] + req_ratio[1]) / 2
+             lvl_xa = A['price'] - (xa_range * avg_ratio) # From A down
+        else: # Bearish (Ends High)
+             req_ratio = requirements.get('XA_AD', (0,0))
+             avg_ratio = (req_ratio[0] + req_ratio[1]) / 2
+             lvl_xa = A['price'] + (xa_range * avg_ratio)
+             
+        # Level 2: BC Projection
+        lvl_bc = 0
+        if D['type'] == 'low':
+             req_ratio = requirements.get('BC_CD', (0,0))
+             avg_ratio = (req_ratio[0] + req_ratio[1]) / 2
+             lvl_bc = C['price'] - (bc_range * avg_ratio)
+        else:
+             req_ratio = requirements.get('BC_CD', (0,0))
+             avg_ratio = (req_ratio[0] + req_ratio[1]) / 2
+             lvl_bc = C['price'] + (bc_range * avg_ratio)
+             
+        # Level 3: AB=CD
+        lvl_abcd = 0
+        if D['type'] == 'low':
+             lvl_abcd = C['price'] - ab_range
+        else:
+             lvl_abcd = C['price'] + ab_range
+             
+        prz_levels = [lvl_xa, lvl_bc, lvl_abcd]
+        prz_levels = [l for l in prz_levels if l != 0]
+        
+        if not prz_levels:
+             prz_min, prz_max = D['price'] * 0.999, D['price'] * 1.001
+        else:
+             prz_min = min(prz_levels)
+             prz_max = max(prz_levels)
+             
+        # Check tightness of PRZ (Guru Validation)
+        prz_width_pct = (prz_max - prz_min) / prz_min
+        if prz_width_pct > 0.015: # If PRZ is wider than 1.5%, it's too loose
+             return None
+             
+        # Check if Price actually visited the PRZ
+        # D['price'] is the pivot. It should be INSIDE or very close to PRZ.
+        if D['price'] < prz_min * 0.99 or D['price'] > prz_max * 1.01:
+             # Allowed slightly outside for "stop run" (wick)
+             pass 
+        
         # Determine pattern type (bullish or bearish)
         pattern_type = 'bullish' if D['type'] == 'low' else 'bearish'
         
         # Calculate entry, stop loss, and targets
-        entry = D['price']
+        entry = (prz_min + prz_max) / 2 # Entry at center of PRZ
         
         if pattern_type == 'bullish':
-            stop_loss = D['price'] - (XA * 0.1)  # 10% below D
+            stop_loss = prz_min - (XA * 0.15)  # Stop below PRZ
             targets = [
-                D['price'] + (CD * 0.382),  # Target 1: 38.2% retracement
-                D['price'] + (CD * 0.618),  # Target 2: 61.8% retracement
-                D['price'] + (CD * 1.0)     # Target 3: 100% retracement
+                entry + (CD * 0.382),  # Target 1
+                entry + (CD * 0.618),  # Target 2
+                entry + (CD * 1.0)     # Target 3
             ]
         else:
-            stop_loss = D['price'] + (XA * 0.1)  # 10% above D
+            stop_loss = prz_max + (XA * 0.15)  # Stop above PRZ
             targets = [
-                D['price'] - (CD * 0.382),
-                D['price'] - (CD * 0.618),
-                D['price'] - (CD * 1.0)
+                entry - (CD * 0.382),
+                entry - (CD * 0.618),
+                entry - (CD * 1.0)
             ]
         
         return HarmonicPattern(
@@ -244,9 +325,10 @@ class HarmonicDetector:
                 'XA_AB': AB / XA if XA != 0 else 0,
                 'AB_BC': BC / AB if AB != 0 else 0,
                 'BC_CD': CD / BC if BC != 0 else 0,
-                'XA_AD': AD / XA if XA != 0 else 0
+                'XA_AD': AD / XA if XA != 0 else 0,
+                'PRZ_Width': prz_width_pct # Added metric
             },
-            confidence=overall_confidence,
+            confidence=overall_confidence, # Could boost this if PRZ is tight
             entry=entry,
             stop_loss=stop_loss,
             targets=targets

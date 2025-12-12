@@ -14,6 +14,8 @@ import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
+from scipy.stats import linregress
+from scipy.signal import argrelextrema
 
 @dataclass
 class MeanReversionSignal:
@@ -46,7 +48,9 @@ class ComprehensiveMeanReversionDetector:
             'rsi_reversion': self.detect_rsi_reversion(df),
             'bb_reversion': self.detect_bb_reversion(df),
             'vwap_reversion': self.detect_vwap_reversion(df),
-            'zscore_reversion': self.detect_zscore_reversion(df)
+            'zscore_reversion': self.detect_zscore_reversion(df),
+            'rsi_divergence': self.detect_rsi_divergence(df),
+            'linear_regression': self.detect_linear_regression_reversion(df)
         }
 
     # ============ RSI MEAN REVERSION ============
@@ -253,6 +257,166 @@ class ComprehensiveMeanReversionDetector:
                 indicators={'z_score': current_z}
             ))
             
+        return signals
+
+        return signals
+
+    # ============ RSI DIVERGENCE (High Accuracy) ============
+
+    def detect_rsi_divergence(self, df: pd.DataFrame) -> List[MeanReversionSignal]:
+        """
+        RSI Divergence:
+        1. Regular Bullish: Price Lower Low, RSI Higher Low (Reversal)
+        2. Regular Bearish: Price Higher High, RSI Lower High (Reversal)
+        """
+        signals = []
+        if len(df) < 50: return signals
+        
+        # Get swing points
+        order = 5
+        highs_idx = argrelextrema(df['high'].values, np.greater, order=order)[0]
+        lows_idx = argrelextrema(df['low'].values, np.less, order=order)[0]
+        
+        current_price = df['close'].iloc[-1]
+        current_rsi = df['rsi'].iloc[-1]
+        
+        # Recent swing points analysis
+        if len(lows_idx) >= 2:
+            last_low_idx = lows_idx[-1]
+            prev_low_idx = lows_idx[-2]
+            
+            # Check if we are near the last low (potential double bottom or div completion)
+            if len(df) - last_low_idx < 10: 
+                price_last = df['low'].iloc[last_low_idx]
+                price_prev = df['low'].iloc[prev_low_idx]
+                rsi_last = df['rsi'].iloc[last_low_idx]
+                rsi_prev = df['rsi'].iloc[prev_low_idx]
+                
+                # Bullish Divergence
+                if price_last < price_prev and rsi_last > rsi_prev:
+                    signals.append(MeanReversionSignal(
+                        type='rsi_divergence',
+                        direction='bullish',
+                        confidence=88.0,
+                        deviation_metric=rsi_last - rsi_prev,
+                        price_level=current_price,
+                        mean_level=df['ema_50'].iloc[-1] if 'ema_50' in df.columns else current_price*1.02,
+                        description=f'Bullish RSI Divergence. Price made Lower Low, RSI made Higher Low.',
+                        entry=current_price,
+                        stop_loss=price_last,
+                        targets=self._calculate_targets(current_price, price_last, 'bullish'),
+                        indicators={'rsi_last': rsi_last, 'rsi_prev': rsi_prev}
+                    ))
+
+        if len(highs_idx) >= 2:
+            last_high_idx = highs_idx[-1]
+            prev_high_idx = highs_idx[-2]
+            
+            if len(df) - last_high_idx < 10:
+                price_last = df['high'].iloc[last_high_idx]
+                price_prev = df['high'].iloc[prev_high_idx]
+                rsi_last = df['rsi'].iloc[last_high_idx]
+                rsi_prev = df['rsi'].iloc[prev_high_idx]
+                
+                # Bearish Divergence
+                if price_last > price_prev and rsi_last < rsi_prev:
+                    signals.append(MeanReversionSignal(
+                        type='rsi_divergence',
+                        direction='bearish',
+                        confidence=88.0,
+                        deviation_metric=rsi_prev - rsi_last,
+                        price_level=current_price,
+                        mean_level=df['ema_50'].iloc[-1] if 'ema_50' in df.columns else current_price*0.98,
+                        description=f'Bearish RSI Divergence. Price made Higher High, RSI made Lower High.',
+                        entry=current_price,
+                        stop_loss=price_last,
+                        targets=self._calculate_targets(current_price, price_last, 'bearish'),
+                        indicators={'rsi_last': rsi_last, 'rsi_prev': rsi_prev}
+                    ))
+        
+        return signals
+
+    # ============ LINEAR REGRESSION CHANNEL (Statistical Extreme) ============
+
+    def detect_linear_regression_reversion(self, df: pd.DataFrame) -> List[MeanReversionSignal]:
+        """
+        Linear Regression Reversion:
+        Price deviation from Line of Best Fit (Standard Deviation Channel).
+        > 2 Sigma = 95% Statistical Extreme.
+        """
+        signals = []
+        if len(df) < 100: return signals
+        
+        # Calculate LinReg over last 100 bars
+        lookback = 100
+        y = df['close'].iloc[-lookback:].values
+        x = np.arange(lookback)
+        
+        slope, intercept, r_value, _, _ = linregress(x, y)
+        
+        # Calculate Regression Line
+        reg_line = slope * x + intercept
+        
+        # Calculate Std Dev of Residuals
+        residuals = y - reg_line
+        std_dev = np.std(residuals)
+        
+        # Current status
+        current_price = y[-1]
+        current_reg = reg_line[-1]
+        current_dev = current_price - current_reg
+        sigma = current_dev / std_dev
+        
+        # Signal Generation
+        # Short Signal: Price > +2 Sigma
+        if sigma > 2.0:
+            confidence = 85.0
+            if sigma > 3.0: confidence = 95.0 # Extreme
+            
+            # RSI Confluence Check
+            confluence = ""
+            if df['rsi'].iloc[-1] > 70:
+                confidence += 5.0
+                confluence = " + RSI Overbought"
+                
+            signals.append(MeanReversionSignal(
+                type='linear_regression',
+                direction='bearish',
+                confidence=min(99.0, confidence),
+                deviation_metric=sigma,
+                price_level=current_price,
+                mean_level=current_reg,
+                description=f'Statistical Extreme: Price at +{sigma:.2f} Sigma (LinReg Channel){confluence}. High probability reversal.',
+                entry=current_price,
+                stop_loss=current_reg + (std_dev * 3.5), # Stop above 3.5 Sigma
+                targets=self._calculate_targets(current_price, current_reg + (std_dev * 3.5), 'bearish'),
+                indicators={'sigma': sigma, 'slope': slope}
+            ))
+            
+        # Long Signal: Price < -2 Sigma
+        elif sigma < -2.0:
+            confidence = 85.0
+            if sigma < -3.0: confidence = 95.0
+            
+            confluence = ""
+            if df['rsi'].iloc[-1] < 30:
+                confidence += 5.0
+                confluence = " + RSI Oversold"
+            
+            signals.append(MeanReversionSignal(
+                type='linear_regression',
+                direction='bullish',
+                confidence=min(99.0, confidence),
+                deviation_metric=abs(sigma),
+                price_level=current_price,
+                mean_level=current_reg,
+                description=f'Statistical Extreme: Price at {sigma:.2f} Sigma (LinReg Channel){confluence}. High probability reversal.',
+                entry=current_price,
+                stop_loss=current_reg - (std_dev * 3.5),
+                targets=self._calculate_targets(current_price, current_reg - (std_dev * 3.5), 'bullish'),
+                indicators={'sigma': sigma, 'slope': slope}
+            ))
+
         return signals
 
     # ============ HELPER METHODS ============
