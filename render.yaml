@@ -1,6 +1,7 @@
 # Render Blueprint Configuration for Brain AI Pro Trader
 # Complete deployment configuration with all services
 # DEPLOY FROM: master branch
+# FIXED: Removed hardcoded secrets and database URLs - use Render environment variables
 
 services:
   # ========================================
@@ -20,9 +21,9 @@ services:
       - key: NEXT_TELEMETRY_DISABLED
         value: 1
       - key: DATABASE_URL
-        value: postgresql://neondb_owner:npg_0y9XMKzHCBsN@ep-blue-resonance-add39g5q-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+        sync: false  # Must be set manually in Render dashboard
       - key: NEXTAUTH_SECRET
-        value: sk_9f2e1c7b4a0d48c3a1e2f9d7b6c4e0a9
+        generateValue: true  # Auto-generate secure secret
       - key: NEXTAUTH_URL
         fromService:
           type: web
@@ -52,7 +53,7 @@ services:
     name: pattern-detector-api
     env: docker
     dockerfilePath: ./Dockerfile
-    dockerContext: ./python-services/pattern_detector
+    dockerContext: ./python-services/pattern-detector
     branch: master
     plan: starter
     healthCheckPath: /health
@@ -62,7 +63,7 @@ services:
       - key: PORT
         value: 8001
       - key: DATABASE_URL
-        value: postgresql://neondb_owner:npg_0y9XMKzHCBsN@ep-blue-resonance-add39g5q-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+        sync: false  # Must be set manually in Render dashboard
     autoDeploy: true
 
   # ========================================
@@ -104,5 +105,5 @@ services:
       - key: PORT
         value: 8003
       - key: DATABASE_URL
-        value: postgresql://neondb_owner:npg_0y9XMKzHCBsN@ep-blue-resonance-add39g5q-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+        sync: false  # Must be set manually in Render dashboard
     autoDeploy: true

@@ -1,5 +1,6 @@
 # AI Trading Platform - Pattern Detector Service Requirements
 # Python 3.11+
+# Fixed version - consolidated dependencies and resolved conflicts
 
 # Web Framework
 fastapi==0.109.0
@@ -8,50 +9,49 @@ pydantic==2.5.3
 pydantic-settings==2.1.0
 
 # Data Processing
-numpy==1.26.3
+numpy==1.26.2
 pandas==2.1.4
 scipy==1.11.4
 
 # Technical Analysis
-ta-lib==0.4.28  # Note: Requires TA-Lib C library to be installed
+ta-lib==0.4.28
 pandas-ta==0.3.14b0
 
 # Machine Learning
-scikit-learn==1.4.0
+scikit-learn==1.3.2
 xgboost==2.0.3
-yfinance==0.2.36
+
+# Data Fetching
+yfinance==0.2.33
 
 # Database
 psycopg2-binary==2.9.9
 sqlalchemy==2.0.25
 
-# Redis
+# Redis (Optional - graceful degradation if unavailable)
 redis==5.0.1
 hiredis==2.3.2
 
 # HTTP Client
 httpx==0.26.0
 aiohttp==3.9.1
+requests==2.31.0
 
 # Utilities
 python-dateutil==2.8.2
 pytz==2023.3.post1
+python-dotenv==1.0.0
 
 # Logging & Monitoring
+loguru==0.7.2
 python-json-logger==2.0.7
 prometheus-client==0.19.0
 
-# Testing
+# Testing (dev only, not required for production)
 pytest==7.4.4
 pytest-asyncio==0.23.3
 pytest-cov==4.1.0
-pytest-mock==3.12.0
 
-# Development
-black==23.12.1
-flake8==7.0.0
-mypy==1.8.0
-isort==5.13.2
-
-# Optional: For advanced pattern recognition
-opencv-python==4.9.0.80  # For image-based pattern matching
+# Data Storage
+pyarrow==14.0.2
+fastparquet==2023.10.1

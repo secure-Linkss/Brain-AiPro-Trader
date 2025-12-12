@@ -1,4 +1,5 @@
 # News Agent Service Dockerfile
+# FIXED: Made LLM model download optional to prevent deployment failures
 FROM python:3.11-slim
 
 # Set working directory
@@ -22,8 +23,9 @@ RUN python -m textblob.download_corpora
 # Copy application code
 COPY . .
 
-# Download Local LLM (baked into image)
-RUN python download_model.py
+# Download Local LLM (optional - won't fail deployment if it fails)
+# This is now optional and will be attempted but won't crash if it fails
+RUN python download_model.py || echo "Model download skipped or failed - service will work without local LLM"
 
 # Expose port
 EXPOSE 8002
@@ -34,4 +36,3 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 
 # Run the application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002"]
-
