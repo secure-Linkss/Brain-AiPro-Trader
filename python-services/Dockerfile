@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
-COPY api_server-requirements.txt requirements.txt
+COPY requirements.txt requirements.txt
 
 # Install Python dependencies
 # Install with error handling for optional AI libraries
@@ -46,7 +46,7 @@ COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy application code - all python services
-COPY python-services/ /app/
+COPY . /app/
 
 # Set Python path
 ENV PYTHONPATH=/app
