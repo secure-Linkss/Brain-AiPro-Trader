@@ -319,6 +319,8 @@ async def analyze_guru(request: DetectionRequest):
     except Exception as e:
         logger.error(f"Error in Guru Analysis: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============================================================================
 # Main
 # ============================================================================

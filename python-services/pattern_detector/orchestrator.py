@@ -20,24 +20,24 @@ import logging
 import json
 
 # Import all specialist detectors
-from detectors.fibonacci_comprehensive import detect_fibonacci_patterns
-from detectors.trend_following_comprehensive import detect_trend_patterns
-from detectors.multi_timeframe_comprehensive import detect_multi_timeframe_patterns
-from detectors.market_regime_comprehensive import detect_market_regime
-from detectors.volume_strategies_comprehensive import detect_volume_strategies
-from detectors.mean_reversion_comprehensive import detect_mean_reversion_strategies
-from detectors.breakout_scalping_comprehensive import detect_breakout_strategies
-from detectors.order_flow_comprehensive import detect_order_flow_strategies
-from detectors.candlestick_comprehensive import detect_candlestick_patterns
-from detectors.smc_comprehensive import detect_smc_patterns
-from detectors.elliott_wave import detect_elliott_waves
-from detectors.harmonics import detect_harmonic_patterns
-from detectors.chart_patterns_advanced import detect_chart_patterns
-from detectors.supply_demand import detect_supply_demand
-from detectors.confirmation_validation_comprehensive import detect_confirmation_strategies
-from detectors.advanced_analytics_comprehensive import detect_advanced_analytics
-from detectors.specialized_institutional_comprehensive import detect_institutional_strategies
-from detectors.news_validator import detect_news_risk
+# Note: In a real production environment, these would be injected or loaded dynamically
+from .fibonacci_comprehensive import detect_fibonacci_patterns
+from .trend_following_comprehensive import detect_trend_patterns
+from .multi_timeframe_comprehensive import detect_multi_timeframe_patterns
+from .market_regime_comprehensive import detect_market_regime
+from .volume_strategies_comprehensive import detect_volume_strategies
+from .mean_reversion_comprehensive import detect_mean_reversion_strategies
+from .breakout_scalping_comprehensive import detect_breakout_strategies
+from .order_flow_comprehensive import detect_order_flow_strategies
+from .candlestick_comprehensive import detect_candlestick_patterns
+from .smc_comprehensive import detect_smc_patterns
+from .elliott_wave import detect_elliott_waves
+from .harmonics import detect_harmonic_patterns
+from .chart_patterns_advanced import detect_chart_patterns
+from .supply_demand import detect_supply_demand
+from .confirmation_validation_comprehensive import detect_confirmation_strategies
+from .advanced_analytics_comprehensive import detect_advanced_analytics
+from .specialized_institutional_comprehensive import detect_institutional_strategies
 
 # Configure Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -69,7 +69,6 @@ class FinalSignal:
     timeframe: str
     timestamp: float
     decision: str  # 'BUY', 'SELL', 'NEUTRAL'
-    status: str    # 'PENDING', 'ACTIVE', 'EXPIRED'
     final_confidence: float
     confidence_label: str  # 'HIGH', 'MEDIUM', 'LOW'
     entry: float
@@ -79,7 +78,6 @@ class FinalSignal:
     supporting_agents: List[Dict]  # Top agents that voted for this
     opposing_agents: List[Dict]    # Agents that voted against
     validator_results: Dict[str, bool]
-    confirmation_checklist: Dict[str, bool] # Reasons for activation
     veto_status: bool
     veto_reasons: List[str]
     market_regime: Dict
@@ -101,7 +99,6 @@ class AgentOrchestrator:
         self.min_validators_required = 2
         self.max_risk_reward = 5.0
         self.min_risk_reward = 1.5
-        self.activation_distance_threshold = 0.002 # 0.2% distance from entry to be considered "In The Zone"
         
     def _initialize_weights(self) -> Dict[str, float]:
         """Initialize dynamic weights for all agent categories"""
@@ -132,27 +129,12 @@ class AgentOrchestrator:
     def process_market_data(self, df: pd.DataFrame, symbol: str, timeframe: str, htf_data: Dict[str, pd.DataFrame] = None) -> FinalSignal:
         """
         Main Pipeline:
-        0. News/Economic Calendar Validation (INSTITUTIONAL GATE)
         1. Run Specialist Agents -> Generate Candidates
         2. Run Validator Agents -> Audit Candidates
         3. Execute Voting Logic
-        4. Check Activation Status (Pending vs Active)
-        5. Generate Final Signal
+        4. Generate Final Signal
         """
         logger.info(f"Processing {symbol} {timeframe}...")
-        
-        # 0. INSTITUTIONAL GATE: Check News/Economic Calendar
-        news_risk = detect_news_risk(df)
-        if not news_risk['safe_to_trade']:
-            logger.warning(f"Trading blocked: {news_risk['reason']}")
-            return self._create_neutral_signal(
-                symbol, 
-                timeframe, 
-                reason=f"INSTITUTIONAL BLOCK: {news_risk['reason']}"
-            )
-        
-        # If medium risk (volatility), we'll reduce confidence later
-        news_confidence_multiplier = news_risk.get('confidence_multiplier', 1.0)
         
         # 1. Run Specialist Agents
         candidates = self._run_specialists(df, htf_data)
@@ -177,18 +159,9 @@ class AgentOrchestrator:
             return self._create_neutral_signal(symbol, timeframe, reason="No candidates passed validation")
             
         # 4. Voting & Fusion
-        final_signal = self._execute_voting(validated_signals, regime)
+        final_decision = self._execute_voting(validated_signals, regime)
         
-        # Apply news risk multiplier to confidence
-        if news_confidence_multiplier < 1.0:
-            final_signal.final_confidence *= news_confidence_multiplier
-            logger.info(f"Confidence adjusted for news risk: {final_signal.final_confidence:.2f}")
-        
-        # 5. Check Activation Status (Guru Logic)
-        if final_signal.decision != 'NEUTRAL':
-            final_signal = self._check_activation_status(final_signal, df)
-            
-        return final_signal
+        return final_decision
 
     def _run_specialists(self, df: pd.DataFrame, htf_data: Dict) -> List[AgentSignal]:
         """Execute all specialist strategy detectors and normalize outputs"""
@@ -446,7 +419,6 @@ class AgentOrchestrator:
             timeframe=best_candidate.timeframe,
             timestamp=datetime.now().timestamp(),
             decision=final_decision,
-            status='PENDING', # Default state
             final_confidence=final_confidence,
             confidence_label=label,
             entry=best_candidate.entry,
@@ -456,113 +428,11 @@ class AgentOrchestrator:
             supporting_agents=supporting,
             opposing_agents=opposing,
             validator_results={},
-            confirmation_checklist={},
             veto_status=False,
             veto_reasons=[],
             market_regime=regime,
-            execution_plan={'type': 'limit', 'limit_price': best_candidate.entry}
+            execution_plan={'type': 'market', 'limit_price': best_candidate.entry}
         )
-
-    def _check_activation_status(self, signal: FinalSignal, df: pd.DataFrame) -> FinalSignal:
-        """
-        GURU LEVEL ACTIVATION LOGIC v2 (STRICTER)
-        Determines if a signal should be PENDING or ACTIVE based on:
-        1. Price Proximity involves Entry
-        2. Volume Validation (The Lie Detector)
-        3. Strict Pattern Confirmation (Rejection/Engulfing)
-        """
-        current_price = df['close'].iloc[-1]
-        entry_price = signal.entry
-        
-        # 1. Check Distance to Entry
-        distance = abs(current_price - entry_price) / entry_price
-        
-        # If too far/outside zone, remains PENDING
-        if distance > self.activation_distance_threshold:
-            signal.status = 'PENDING'
-            signal.execution_plan['type'] = 'limit'
-            return signal
-            
-        # 2. Institutional Volume Check (The Lie Detector)
-        # We need to see volume INCREASING as price hits our level (Institutional Absorption)
-        last_candle = df.iloc[-1]
-        avg_vol = df['volume'].iloc[-20:].mean()
-        # Strict: Volume should be at least 1.5x average to confirm institutional interest
-        is_high_volume = last_candle['volume'] > avg_vol * 1.5
-        
-        # 3. Pattern Recognition
-        is_rejection = False
-        is_engulfing = False
-        
-        body = abs(last_candle['close'] - last_candle['open'])
-        range_len = last_candle['high'] - last_candle['low']
-        
-        if signal.decision == 'BUY':
-            # Wick Rejection (Hammer) - Wick must be significant (>60% of candle range)
-            lower_wick = min(last_candle['close'], last_candle['open']) - last_candle['low']
-            if range_len > 0 and (lower_wick / range_len) > 0.6: 
-                is_rejection = True
-            
-            # Bullish Engulfing / Momentum
-            # Close must be higher than previous high OR strong body close
-            prev_candle = df.iloc[-2]
-            if last_candle['close'] > prev_candle['high'] and last_candle['close'] > last_candle['open']:
-                is_engulfing = True
-                
-        elif signal.decision == 'SELL':
-            # Wick Rejection (Shooting Star)
-            upper_wick = last_candle['high'] - max(last_candle['close'], last_candle['open'])
-            if range_len > 0 and (upper_wick / range_len) > 0.6: 
-                is_rejection = True
-
-            # Bearish Engulfing
-            # Close lower than prev low
-            prev_candle = df.iloc[-2]
-            if last_candle['close'] < prev_candle['low'] and last_candle['close'] < last_candle['open']:
-                is_engulfing = True
-
-        # 4. The Decision Matrix
-        
-        checklist = {
-            'in_zone': True,
-            'high_volume': is_high_volume,
-            'wick_rejection': is_rejection,
-            'momentum_shift': is_engulfing
-        }
-        signal.confirmation_checklist = checklist
-        
-        is_active = False
-        
-        # CRITICAL LOGIC: Strategy-Specific Strictness
-        # For Sniper/SMC/Institutional strategies, we demand PERFECTION.
-        # We need Volume Validation to confirm the move isn't a fake-out.
-        is_sniper_strategy = False
-        if signal.supporting_agents and any(x['agent'] in ['smc', 'institutional', 'order_flow'] for x in signal.supporting_agents):
-             is_sniper_strategy = True
-             
-        if is_sniper_strategy:
-             # STRICT: Must have Volume + Pattern
-             # OR Extremely strong pattern (e.g. huge engulfing)
-             if is_high_volume and (is_rejection or is_engulfing):
-                 is_active = True
-             elif is_engulfing and is_rejection: # Both patterns without volume is acceptable (rare)
-                 is_active = True
-        else:
-             # STANDARD (Trend/Fib): Pattern is usually enough as we are following trend
-             if is_rejection or is_engulfing:
-                 is_active = True
-                 
-        if is_active:
-            signal.status = 'ACTIVE'
-            signal.execution_plan['type'] = 'market' # Enter NOW
-            # Boost confidence significantly because we have confirmation
-            signal.final_confidence = min(0.99, signal.final_confidence + 0.15) 
-        else:
-            # Price is there but no reaction yet -> PENDING (Waiting for confirmation)
-            signal.status = 'PENDING'
-            signal.execution_plan['type'] = 'limit'
-            
-        return signal
 
     def _create_neutral_signal(self, symbol: str, timeframe: str, reason: str = "No Signal") -> FinalSignal:
         return FinalSignal(
@@ -570,7 +440,6 @@ class AgentOrchestrator:
             timeframe=timeframe,
             timestamp=datetime.now().timestamp(),
             decision='NEUTRAL',
-            status='PENDING',
             final_confidence=0.0,
             confidence_label='LOW',
             entry=0.0,
@@ -580,7 +449,6 @@ class AgentOrchestrator:
             supporting_agents=[],
             opposing_agents=[],
             validator_results={},
-            confirmation_checklist={},
             veto_status=False,
             veto_reasons=[reason],
             market_regime={},

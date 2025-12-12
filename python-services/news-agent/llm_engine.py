@@ -43,7 +43,9 @@ class LocalLLMEngine:
             logger.info("Local LLM loaded successfully.")
         except Exception as e:
             logger.error(f"Failed to load Local LLM: {e}")
-            raise e
+            # Do NOT raise here if we want the service to start without LLM
+            # raise e
+            self._model = None
 
     def analyze_sentiment(self, text: str) -> Dict[str, float]:
         """

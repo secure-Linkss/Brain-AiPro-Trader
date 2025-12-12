@@ -249,7 +249,16 @@ async def generate_text(request: LLMRequest):
         from market_data import market_fetcher
         
         if llm_engine._model is None:
-            llm_engine.load_model()
+            try:
+                llm_engine.load_model()
+            except Exception as e:
+                logger.warning(f"Could not load LLM model: {e}. Proceeding without LLM.")
+                # We can return early or just let market_context be empty if that's acceptable
+                # For this specific endpoint, if LLM is down, we can't generate text at all.
+                # However, the user asked to not crash. 
+                # If LLM load fails, we should probably raise an error or return a fallback. 
+                # But let's assume we want to TRY loading.
+                raise HTTPException(status_code=503, detail="Local LLM is unavailable.")
             
         # 1. Fetch Live Context if symbol provided or auto-detected in prompt
         market_context = ""
